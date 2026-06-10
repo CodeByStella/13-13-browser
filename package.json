@@ -3,13 +3,19 @@
   "version": "1.0.0",
   "description": "13.13 Browser — a desktop web browser with native screen-capture protection",
   "main": "dist-electron/main.js",
+  "packageManager": "pnpm@10.12.1",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "start": "electron .",
-    "dist": "npm run build && electron-builder",
+    "dist": "pnpm run build && electron-builder",
     "postinstall": "node node_modules/electron/install.js"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
   },
   "build": {
     "appId": "app.browser1313.desktop",

@@ -8,10 +8,24 @@ A lightweight desktop web browser built with Electron, TypeScript, React, and Vi
 
 ## Features
 
-- **Web browsing** — Address bar with direct URL entry and DuckDuckGo search integration
-- **Navigation controls** — Back, forward, reload, and stop
+- **Multi-tab browsing** — Create, switch, and close tabs with favicon support
+- **New tab page** — Branded start page with search and quick links
+- **Address bar** — Direct URL entry, DuckDuckGo search, and HTTPS security indicator
+- **Navigation controls** — Back, forward, home, reload, and stop
+- **Keyboard shortcuts** — `Ctrl+T` new tab, `Ctrl+W` close, `Ctrl+L` address bar, `Ctrl+Tab` cycle tabs
 - **Screen-capture protection** — Enabled by default; toggle from the toolbar
 - **Cross-platform foundation** — Electron-based architecture ready for Windows, macOS, and Linux
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+T` | New tab |
+| `Ctrl+W` | Close active tab |
+| `Ctrl+L` | Focus address bar |
+| `Ctrl+R` | Reload page |
+| `Ctrl+Tab` | Next tab |
+| `Ctrl+Shift+Tab` | Previous tab |
 
 ## Screen-Capture Protection
 
@@ -30,13 +44,13 @@ The window renders normally on your display. Third-party tools such as OBS, Snip
 ## Requirements
 
 - Node.js 20 or later
-- npm 10 or later
+- pnpm 10 or later
 - Windows 10 (build 19041+) recommended for full capture exclusion
 
 ## Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 If Electron fails to launch with a binary error, run the install script manually:
@@ -50,7 +64,7 @@ node node_modules/electron/install.js
 Start the application in development mode with hot reload:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Vite serves the renderer on `http://localhost:5173/` and launches Electron automatically.
@@ -60,14 +74,14 @@ Vite serves the renderer on `http://localhost:5173/` and launches Electron autom
 Build the application:
 
 ```bash
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
 
 Create a Windows installer:
 
 ```bash
-npm run dist
+pnpm dist
 ```
 
 Output is written to the `release/` directory.
@@ -76,13 +90,18 @@ Output is written to the `release/` directory.
 
 ```
 electron/
-  main.ts       Main process — window management, BrowserView, IPC
-  preload.ts    Secure bridge between main and renderer
+  main.ts         Main process — window, IPC, content protection
+  tab-manager.ts  Multi-tab BrowserView management
+  preload.ts      Secure bridge between main and renderer
+  shared.ts       Shared utilities and constants
 src/
-  App.tsx       Application state and event handlers
-  components/   Browser chrome UI
-dist/           Compiled renderer (production)
-dist-electron/  Compiled main and preload (production)
+  App.tsx         Application state, keyboard shortcuts
+  components/     Tab bar, toolbar, icons
+  types/          TypeScript interfaces
+public/
+  newtab.html     Built-in new tab page
+dist/             Compiled renderer (production)
+dist-electron/    Compiled main and preload (production)
 ```
 
 ## Technology Stack
