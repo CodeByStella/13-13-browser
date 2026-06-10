@@ -1,0 +1,44 @@
+{
+  "name": "13-13-browser",
+  "version": "1.0.0",
+  "description": "13.13 Browser — a desktop web browser with native screen-capture protection",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "electron .",
+    "dist": "npm run build && electron-builder",
+    "postinstall": "node node_modules/electron/install.js"
+  },
+  "build": {
+    "appId": "app.browser1313.desktop",
+    "productName": "13.13 Browser",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/node": "^22.15.3",
+    "@vitejs/plugin-react": "^4.4.1",
+    "electron": "^36.2.0",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  }
+}
