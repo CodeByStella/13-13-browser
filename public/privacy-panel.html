@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Shield</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --bg: #0a0e16;
+        --surface: #111622;
+        --surface-raised: #171d2e;
+        --border: #2a3350;
+        --border-light: #3d4a6e;
+        --text: #eef2ff;
+        --text-muted: #8892b0;
+        --accent: #5b8def;
+        --accent-glow: rgba(91, 141, 239, 0.35);
+        --privacy: #3ecf8e;
+        --privacy-glow: rgba(62, 207, 142, 0.3);
+        --danger: #ef6b6b;
+        --inset: inset 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        --raised: 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 10px rgba(0, 0, 0, 0.35);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      .privacy-panel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(61, 74, 110, 0.55);
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .privacy-panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .privacy-panel-title {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .privacy-panel-title svg {
+        width: 28px;
+        height: 28px;
+        color: var(--privacy);
+        filter: drop-shadow(0 0 8px var(--privacy-glow));
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+      }
+
+      .privacy-panel-title h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .privacy-panel-title p {
+        margin: 2px 0 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .panel-close {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text-muted);
+        cursor: pointer;
+        box-shadow: var(--raised);
+      }
+
+      .panel-close svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.5;
+      }
+
+      .privacy-panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 14px 14px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+
+      .privacy-panel-body::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .privacy-panel-body::-webkit-scrollbar-thumb {
+        border-radius: 3px;
+        background: var(--border);
+      }
+
+      .privacy-score-card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(62, 207, 142, 0.2);
+        background: linear-gradient(145deg, rgba(62, 207, 142, 0.1), rgba(62, 207, 142, 0.02));
+        box-shadow: var(--raised);
+      }
+
+      .score-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .score-ring {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: conic-gradient(var(--privacy) calc(var(--score) * 1%), rgba(255, 255, 255, 0.06) 0);
+        box-shadow: var(--inset), 0 0 16px var(--privacy-glow);
+        flex-shrink: 0;
+      }
+
+      .score-value {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--surface-raised);
+        display: grid;
+        place-items: center;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--privacy);
+        box-shadow: var(--inset);
+      }
+
+      .score-details strong { display: block; font-size: 0.85rem; color: var(--text); }
+      .score-details span { font-size: 0.72rem; color: var(--text-muted); }
+
+      .score-breakdown {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+
+      .score-factor {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        padding: 5px 4px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.18);
+        font-size: 0.62rem;
+        color: var(--text-muted);
+        line-height: 1.15;
+        text-align: center;
+      }
+
+      .score-factor.active {
+        border-color: rgba(62, 207, 142, 0.35);
+        color: var(--privacy);
+        background: rgba(62, 207, 142, 0.08);
+      }
+
+      .score-factor .factor-pts {
+        font-weight: 700;
+        font-size: 0.58rem;
+        opacity: 0.85;
+      }
+
+      .privacy-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .stat-card {
+        padding: 10px 8px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        box-shadow: var(--inset);
+        text-align: center;
+      }
+
+      .stat-num {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--accent);
+        text-shadow: 0 0 12px var(--accent-glow);
+      }
+
+      .stat-label { font-size: 0.68rem; color: var(--text-muted); }
+
+      .privacy-toggles {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .privacy-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 11px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+        box-shadow: var(--raised);
+        cursor: pointer;
+      }
+
+      .toggle-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); }
+      .toggle-desc { display: block; font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+
+      .privacy-toggle-row input[type='checkbox'] {
+        width: 38px;
+        height: 22px;
+        appearance: none;
+        border-radius: 11px;
+        background: var(--bg);
+        box-shadow: var(--inset);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        position: relative;
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+
+      .privacy-toggle-row input[type='checkbox']::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        box-shadow: var(--raised);
+        transition: transform 0.2s, background 0.2s;
+      }
+
+      .privacy-toggle-row input[type='checkbox']:checked {
+        background: rgba(62, 207, 142, 0.2);
+        border-color: rgba(62, 207, 142, 0.4);
+      }
+
+      .privacy-toggle-row input[type='checkbox']:checked::after {
+        transform: translateX(16px);
+        background: var(--privacy);
+        box-shadow: 0 0 8px var(--privacy-glow);
+      }
+
+      .clear-data-btn {
+        padding: 10px;
+        border-radius: 11px;
+        border: 1px solid rgba(239, 107, 107, 0.3);
+        background: linear-gradient(180deg, rgba(239, 107, 107, 0.12), rgba(239, 107, 107, 0.04));
+        color: var(--danger);
+        font-weight: 600;
+        font-size: 0.82rem;
+        cursor: pointer;
+        box-shadow: var(--raised);
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="privacy-panel" role="dialog" aria-label="Privacy dashboard" id="panel">
+      <div class="privacy-panel-header">
+        <div class="privacy-panel-title">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5.5-3.5 9.5-8 10-4.5-.5-8-4.5-8-10V6l8-4z"/></svg>
+          <div>
+            <h2>Privacy Shield</h2>
+            <p>Your protection dashboard</p>
+          </div>
+        </div>
+        <button type="button" class="panel-close" id="close-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="privacy-panel-body" id="body"></div>
+    </aside>
+    <script>
+      const TOGGLES = [
+        { key: 'blockTrackers', label: 'Block trackers', desc: 'Stop known analytics and ad-tracking requests' },
+        { key: 'sendDoNotTrack', label: 'Do Not Track', desc: 'Send DNT: 1 header with every request' },
+        { key: 'blockPermissions', label: 'Block sensitive permissions', desc: 'Deny camera, mic, location, and notifications by default' },
+        { key: 'clearOnExit', label: 'Clear data on exit', desc: 'Wipe cache and storage when the browser closes' },
+        { key: 'protection', label: 'Screen capture protection', desc: 'Hide window from screenshots and screen recording', isProtection: true },
+      ];
+
+      const SCORE_FACTORS = [
+        { key: 'blockTrackers', label: 'Trackers', points: 25 },
+        { key: 'sendDoNotTrack', label: 'DNT', points: 20 },
+        { key: 'blockPermissions', label: 'Permissions', points: 25 },
+        { key: 'protection', label: 'Capture', points: 30, isProtection: true },
+      ];
+
+      let state = {
+        settings: {},
+        stats: { trackersBlocked: 0, permissionsDenied: 0 },
+        protectionEnabled: true,
+      };
+
+      function scoreLabel(score) {
+        if (score >= 80) return 'Excellent';
+        if (score >= 50) return 'Good';
+        return 'Needs attention';
+      }
+
+      function computeScore(settings, protectionEnabled) {
+        return Math.min(
+          100,
+          (settings.blockTrackers ? 25 : 0) +
+            (settings.sendDoNotTrack ? 20 : 0) +
+            (settings.blockPermissions ? 25 : 0) +
+            (protectionEnabled ? 30 : 0),
+        );
+      }
+
+      function render() {
+        const score = computeScore(state.settings, state.protectionEnabled);
+        const body = document.getElementById('body');
+
+        body.innerHTML = `
+          <div class="privacy-score-card">
+            <div class="score-hero">
+              <div class="score-ring" style="--score: ${score}">
+                <span class="score-value">${score}</span>
+              </div>
+              <div class="score-details">
+                <strong>Privacy score</strong>
+                <span>${scoreLabel(score)}</span>
+              </div>
+            </div>
+            <div class="score-breakdown">
+              ${SCORE_FACTORS.map(({ key, label, points, isProtection }) => {
+                const active = isProtection ? state.protectionEnabled : state.settings[key];
+                return `<span class="score-factor${active ? ' active' : ''}"><span>${label}</span><span class="factor-pts">+${points}</span></span>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="privacy-stats">
+            <div class="stat-card">
+              <span class="stat-num">${state.stats.trackersBlocked}</span>
+              <span class="stat-label">Trackers blocked</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num">${state.stats.permissionsDenied}</span>
+              <span class="stat-label">Permissions denied</span>
+            </div>
+          </div>
+          <div class="privacy-toggles">
+            ${TOGGLES.map(
+              ({ key, label, desc, isProtection }) => `
+                <label class="privacy-toggle-row">
+                  <div>
+                    <span class="toggle-label">${label}</span>
+                    <span class="toggle-desc">${desc}</span>
+                  </div>
+                  <input type="checkbox" data-key="${key}" ${(isProtection ? state.protectionEnabled : state.settings[key]) ? 'checked' : ''} />
+                </label>
+              `,
+            ).join('')}
+          </div>
+          <button type="button" class="clear-data-btn" id="clear-btn">Clear browsing data now</button>
+        `;
+
+        body.querySelectorAll('input[data-key]').forEach((input) => {
+          input.addEventListener('change', async (event) => {
+            const key = event.target.getAttribute('data-key');
+            const checked = event.target.checked;
+            if (key === 'protection') {
+              const next = await window.privacyPanelApi.toggleProtection();
+              state.protectionEnabled = next.enabled;
+            } else {
+              state.settings = await window.privacyPanelApi.updateSetting(key, checked);
+            }
+            render();
+          });
+        });
+
+        document.getElementById('clear-btn').addEventListener('click', async () => {
+          await window.privacyPanelApi.clearData();
+        });
+      }
+
+      function applyData(data) {
+        state.settings = data.settings;
+        state.stats = data.stats;
+        state.protectionEnabled = data.protectionEnabled;
+        render();
+      }
+
+      document.getElementById('close-btn').addEventListener('click', () => {
+        window.privacyPanelApi.close();
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          window.privacyPanelApi.close();
+        }
+      });
+
+      window.privacyPanelApi.onData(applyData);
+      window.privacyPanelApi.onState((next) => {
+        state.settings = next.settings;
+        state.stats = next.stats;
+        render();
+      });
+      window.privacyPanelApi.onProtection((next) => {
+        state.protectionEnabled = next.enabled;
+        render();
+      });
+    </script>
+  </body>
+</html>

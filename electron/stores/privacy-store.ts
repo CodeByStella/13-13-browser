@@ -2,19 +2,10 @@ import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export interface PrivacySettings {
-  blockTrackers: boolean;
-  sendDoNotTrack: boolean;
-  blockPermissions: boolean;
-  clearOnExit: boolean;
-}
+import { DEFAULT_PRIVACY_SETTINGS, type PrivacySettings } from '@shared/types';
 
-export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
-  blockTrackers: true,
-  sendDoNotTrack: true,
-  blockPermissions: true,
-  clearOnExit: false,
-};
+export type { PrivacySettings };
+export { DEFAULT_PRIVACY_SETTINGS };
 
 const FILE = 'privacy-settings.json';
 

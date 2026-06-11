@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
+
+import type { PrivacySettings } from '@shared/types';
+import { computePrivacyScore } from '@shared/utils/privacy-score';
 import type {
   Bookmark,
   ContentProtectionState,
-  PrivacySettings,
   TabInfo,
-} from '../types/browser';
+} from '@shared/types';
 import { BookmarkBar } from './BookmarkBar';
 import { FindBar } from './FindBar';
 import { TabBar } from './TabBar';
@@ -33,15 +35,12 @@ interface BrowserChromeProps {
   onGoHome: () => void;
   onReload: () => void;
   onStop: () => void;
-  onToggleProtection: () => void;
   onToggleBookmark: () => void;
   onOpenFind: () => void;
-  onOpenPrivacy: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomReset: () => void;
   onNewTab: () => void;
-  onNewPrivateTab: () => void;
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onBookmarkNavigate: (url: string) => void;
@@ -55,14 +54,8 @@ interface BrowserChromeProps {
   onCloseWindow: () => void;
 }
 
-function computePrivacyScore(settings: PrivacySettings, protection: boolean): number {
-  return Math.min(
-    100,
-    (settings.blockTrackers ? 25 : 0) +
-      (settings.sendDoNotTrack ? 20 : 0) +
-      (settings.blockPermissions ? 25 : 0) +
-      (protection ? 30 : 0),
-  );
+function computeScore(settings: PrivacySettings, protection: boolean): number {
+  return computePrivacyScore(settings, protection);
 }
 
 export function BrowserChrome(props: BrowserChromeProps) {
@@ -90,15 +83,12 @@ export function BrowserChrome(props: BrowserChromeProps) {
     onGoHome,
     onReload,
     onStop,
-    onToggleProtection,
     onToggleBookmark,
     onOpenFind,
-    onOpenPrivacy,
     onZoomIn,
     onZoomOut,
     onZoomReset,
     onNewTab,
-    onNewPrivateTab,
     onSwitchTab,
     onCloseTab,
     onBookmarkNavigate,
@@ -113,7 +103,7 @@ export function BrowserChrome(props: BrowserChromeProps) {
   } = props;
 
   const anyLoading = tabs.some((tab) => tab.isLoading);
-  const privacyScore = computePrivacyScore(privacySettings, protection.enabled);
+  const privacyScore = computeScore(privacySettings, protection.enabled);
 
   useEffect(() => {
     const el = chromeRef.current;
@@ -136,13 +126,10 @@ export function BrowserChrome(props: BrowserChromeProps) {
 
       <TabBar
         tabs={tabs}
-        privacyScore={privacyScore}
         maximized={maximized}
         onNewTab={onNewTab}
-        onNewPrivateTab={onNewPrivateTab}
         onSwitchTab={onSwitchTab}
         onCloseTab={onCloseTab}
-        onOpenPrivacy={onOpenPrivacy}
         onMinimize={onMinimize}
         onToggleMaximize={onToggleMaximize}
         onCloseWindow={onCloseWindow}
@@ -151,7 +138,7 @@ export function BrowserChrome(props: BrowserChromeProps) {
       <Toolbar
         activeTab={activeTab}
         addressValue={addressValue}
-        protection={protection}
+        privacyScore={privacyScore}
         zoomLevel={zoomLevel}
         isBookmarked={isBookmarked}
         addressRef={addressRef}
@@ -164,10 +151,8 @@ export function BrowserChrome(props: BrowserChromeProps) {
         onGoHome={onGoHome}
         onReload={onReload}
         onStop={onStop}
-        onToggleProtection={onToggleProtection}
         onToggleBookmark={onToggleBookmark}
         onOpenFind={onOpenFind}
-        onOpenPrivacy={onOpenPrivacy}
         onZoomIn={onZoomIn}
         onZoomOut={onZoomOut}
         onZoomReset={onZoomReset}

@@ -2,12 +2,9 @@ import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export interface Bookmark {
-  id: string;
-  title: string;
-  url: string;
-  createdAt: number;
-}
+import type { Bookmark } from '@shared/types';
+
+export type { Bookmark };
 
 const FILE = 'bookmarks.json';
 

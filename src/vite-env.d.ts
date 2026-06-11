@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { BrowserApi } from '../electron/preload';
+import type { BrowserApi } from '../electron/preload/index';
 
 declare global {
   interface Window {

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Site permissions</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --bg: #0a0e16;
+        --surface: #111622;
+        --surface-raised: #171d2e;
+        --border: #2a3350;
+        --text: #eef2ff;
+        --text-muted: #8892b0;
+        --accent: #5b8def;
+        --accent-glow: rgba(91, 141, 239, 0.35);
+        --privacy: #3ecf8e;
+        --danger: #ef6b6b;
+        --inset: inset 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        --raised: 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 10px rgba(0, 0, 0, 0.35);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      .site-panel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(61, 74, 110, 0.55);
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .site-panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .site-panel-title h2 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text);
+        word-break: break-all;
+      }
+
+      .site-panel-title p {
+        margin: 3px 0 0;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+
+      .panel-close {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text-muted);
+        cursor: pointer;
+        box-shadow: var(--raised);
+        flex-shrink: 0;
+      }
+
+      .panel-close svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.5;
+      }
+
+      .site-panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 14px 14px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .site-note {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(91, 141, 239, 0.25);
+        background: rgba(91, 141, 239, 0.08);
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        line-height: 1.35;
+      }
+
+      .permission-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+        box-shadow: var(--raised);
+      }
+
+      .permission-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .permission-states {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+      }
+
+      .permission-states button {
+        padding: 6px 4px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--text-muted);
+        font-size: 0.65rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .permission-states button.active-default {
+        border-color: rgba(136, 146, 176, 0.45);
+        color: var(--text);
+        background: rgba(136, 146, 176, 0.12);
+      }
+
+      .permission-states button.active-allow {
+        border-color: rgba(62, 207, 142, 0.45);
+        color: var(--privacy);
+        background: rgba(62, 207, 142, 0.12);
+      }
+
+      .permission-states button.active-block {
+        border-color: rgba(239, 107, 107, 0.45);
+        color: var(--danger);
+        background: rgba(239, 107, 107, 0.12);
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="site-panel" role="dialog" aria-label="Site permissions">
+      <div class="site-panel-header">
+        <div class="site-panel-title">
+          <h2 id="hostname">Site permissions</h2>
+          <p id="subtitle">Control access for this site</p>
+        </div>
+        <button type="button" class="panel-close" id="close-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="site-panel-body" id="body"></div>
+    </aside>
+    <script>
+      const PERMISSIONS = [
+        { key: 'camera', label: 'Camera' },
+        { key: 'microphone', label: 'Microphone' },
+        { key: 'geolocation', label: 'Location' },
+        { key: 'notifications', label: 'Notifications' },
+      ];
+
+      let state = null;
+
+      function render() {
+        if (!state) return;
+
+        document.getElementById('hostname').textContent = state.hostname;
+        document.getElementById('subtitle').textContent = 'Permissions for this site';
+
+        const note = state.globalBlockEnabled
+          ? 'Global privacy blocking is on. Set Allow here to override for this site.'
+          : 'Default follows browser privacy settings for this site.';
+
+        const body = document.getElementById('body');
+        body.innerHTML = `
+          <div class="site-note">${note}</div>
+          ${PERMISSIONS.map(({ key, label }) => {
+            const value = state.permissions[key] ?? 'default';
+            return `
+              <div class="permission-row" data-key="${key}">
+                <span class="permission-label">${label}</span>
+                <div class="permission-states">
+                  ${['default', 'allow', 'block'].map((option) => `
+                    <button
+                      type="button"
+                      class="${value === option ? `active-${option}` : ''}"
+                      data-value="${option}"
+                    >${option.charAt(0).toUpperCase() + option.slice(1)}</button>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        `;
+
+        body.querySelectorAll('.permission-row').forEach((row) => {
+          const key = row.getAttribute('data-key');
+          row.querySelectorAll('button[data-value]').forEach((button) => {
+            button.addEventListener('click', async () => {
+              const value = button.getAttribute('data-value');
+              state = await window.sitePermissionsApi.setPermission(key, value);
+              render();
+            });
+          });
+        });
+      }
+
+      document.getElementById('close-btn').addEventListener('click', () => {
+        window.sitePermissionsApi.close();
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          window.sitePermissionsApi.close();
+        }
+      });
+
+      window.sitePermissionsApi.onData((data) => {
+        state = data;
+        render();
+      });
+    </script>
+  </body>
+</html>

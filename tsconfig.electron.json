@@ -1,15 +1,11 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "outDir": "dist-electron",
-    "rootDir": "electron",
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "jsx": "preserve",
+    "noEmit": true
   },
-  "include": ["electron"]
+  "include": ["electron", "shared"]
 }

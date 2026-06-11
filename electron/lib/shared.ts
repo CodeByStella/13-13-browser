@@ -1,30 +1,6 @@
 import type { WebContents } from 'electron';
 import os from 'node:os';
 
-export interface TabInfo {
-  id: string;
-  title: string;
-  url: string;
-  favicon?: string;
-  isLoading: boolean;
-  canGoBack: boolean;
-  canGoForward: boolean;
-  isActive: boolean;
-  isSecure: boolean;
-  isPrivate: boolean;
-}
-
-export interface BrowserState {
-  tabs: TabInfo[];
-  activeTabId: string | null;
-  zoomLevel: number;
-}
-
-export interface ContentProtectionState {
-  enabled: boolean;
-  supported: boolean;
-}
-
 export const CHROME_HEIGHT_BASE = 110;
 export const BOOKMARK_BAR_HEIGHT = 28;
 export let CHROME_HEIGHT = CHROME_HEIGHT_BASE;
@@ -46,13 +22,7 @@ export function normalizeUrl(input: string, newTabPageUrl: string): string {
   return `https://duckduckgo.com/?q=${encodeURIComponent(trimmed)}`;
 }
 
-export function isSecureUrl(url: string): boolean {
-  try {
-    return new URL(url).protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
+export { isSecureUrl } from '@shared/utils/url';
 
 export function canGoBack(wc: WebContents): boolean {
   return wc.navigationHistory.canGoBack();
@@ -77,3 +47,10 @@ export function supportsExcludeFromCapture(): boolean {
   const build = Number(release.split('.')[2]);
   return build >= 19041;
 }
+
+// Re-export shared types for backward compatibility within electron/.
+export type {
+  TabInfo,
+  BrowserState,
+  ContentProtectionState,
+} from '@shared/types';

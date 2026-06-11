@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menu</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --surface: #111622;
+        --text: #eef2ff;
+        --text-muted: #8892b0;
+        --privacy: #3ecf8e;
+        --private: #a78bfa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      .menu-shell {
+        padding: 0;
+      }
+
+      .toolbar-menu-dropdown {
+        width: 100%;
+        padding: 4px;
+        border: 1px solid rgba(61, 74, 110, 0.55);
+        border-radius: 8px;
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 8px 10px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.78rem;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .menu-icon {
+        display: grid;
+        place-items: center;
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        color: var(--text-muted);
+      }
+
+      .menu-icon.private {
+        color: var(--private);
+      }
+
+      .menu-icon.shield {
+        color: var(--privacy);
+      }
+
+      .menu-icon svg {
+        width: 14px;
+        height: 14px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .menu-label {
+        flex: 1;
+      }
+
+      kbd {
+        padding: 1px 5px;
+        border: 1px solid rgba(42, 51, 80, 0.5);
+        border-radius: 4px;
+        background: rgba(17, 22, 34, 0.8);
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 0.62rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="menu-shell">
+      <div id="menu" class="toolbar-menu-dropdown" role="menu"></div>
+    </div>
+    <script>
+      const ICONS = {
+        private:
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"/></svg>',
+        search:
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>',
+        shield:
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5.5-3.5 9.5-8 10-4.5-.5-8-4.5-8-10V6l8-4z"/></svg>',
+        devtools: '<span style="font-size:0.62rem;font-weight:700">&lt;/&gt;</span>',
+      };
+
+      function renderItems(items) {
+        const menu = document.getElementById('menu');
+        menu.innerHTML = '';
+
+        items.forEach((item) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'menu-item';
+          button.setAttribute('role', 'menuitem');
+
+          const icon = document.createElement('span');
+          icon.className = 'menu-icon' + (item.icon === 'private' ? ' private' : item.icon === 'shield' ? ' shield' : '');
+          icon.innerHTML = ICONS[item.icon] || '';
+
+          const label = document.createElement('span');
+          label.className = 'menu-label';
+          label.textContent = item.label;
+
+          button.appendChild(icon);
+          button.appendChild(label);
+
+          if (item.shortcut) {
+            const shortcut = document.createElement('kbd');
+            shortcut.textContent = item.shortcut;
+            button.appendChild(shortcut);
+          }
+
+          button.addEventListener('click', () => {
+            window.chromeMenuApi.select(item.id);
+          });
+
+          menu.appendChild(button);
+        });
+      }
+
+      window.chromeMenuApi.onItems(renderItems);
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          window.close();
+        }
+      });
+    </script>
+  </body>
+</html>

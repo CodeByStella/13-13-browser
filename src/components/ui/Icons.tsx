@@ -44,6 +44,14 @@ export function IconHome({ className }: IconProps) {
   );
 }
 
+export function IconNewTab({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M12 7.5v9M7.5 12h9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function IconPlus({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
@@ -64,6 +72,15 @@ export function IconShield({ className, active }: IconProps & { active?: boolean
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={`${className ?? ''} ${active ? 'shield-active' : ''}`}>
       <path d="M12 3l7 3v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z" />
+    </svg>
+  );
+}
+
+export function IconSitePermissions({ className, active }: IconProps & { active?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M12 3l7 3v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z" opacity={active ? 1 : 0.85} />
+      <path d="M8 12h8M12 8v8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -121,6 +138,16 @@ export function IconPrivate({ className }: IconProps) {
       <path d="M3 11h18v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z" />
       <path d="M7 11V8a5 5 0 0110 0v3" />
       <circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconMore({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <circle cx="12" cy="5.5" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="18.5" r="1.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }

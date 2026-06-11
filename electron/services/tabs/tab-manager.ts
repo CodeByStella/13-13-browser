@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { IPC_EVENTS } from '@shared/ipc/channels';
 import {
   CHROME_HEIGHT,
   canGoBack,
@@ -15,9 +16,9 @@ import {
   normalizeUrl,
   type BrowserState,
   type TabInfo,
-} from './shared';
-import { saveSession, type SessionData } from './session-store';
-import { attachPrivacySession } from './privacy';
+} from '../../lib/shared';
+import { saveSession, type SessionData } from '../../stores/session-store';
+import { attachPrivacySession } from '../privacy/privacy';
 
 interface Tab {
   id: string;
@@ -119,7 +120,9 @@ export class TabManager {
     this.tabOrder = this.tabOrder.filter((tabId) => tabId !== id);
 
     if (this.tabs.size === 0) {
-      this.createTab();
+      this.activeTabId = null;
+      this.broadcastState();
+      this.window.close();
       return;
     }
 
@@ -246,7 +249,7 @@ export class TabManager {
 
   stopFindInPage(): void {
     this.getActiveWebContents()?.stopFindInPage('clearSelection');
-    this.window.webContents.send('find-result', { activeMatch: 0, matches: 0 });
+    this.window.webContents.send(IPC_EVENTS.FIND_RESULT, { activeMatch: 0, matches: 0 });
   }
 
   persistSession(): void {
@@ -277,6 +280,13 @@ export class TabManager {
       activeTabId: this.activeTabId,
       zoomLevel: this.getZoom(),
     };
+  }
+
+  getActiveTabUrl(): string {
+    const tab = this.getActiveTab();
+    if (!tab) return '';
+    const rawUrl = tab.view.webContents.getURL();
+    return this.isInternalPage(rawUrl) ? '' : rawUrl;
   }
 
   private setZoom(factor: number): number {
@@ -384,7 +394,7 @@ export class TabManager {
 
     wc.on('found-in-page', (_event, result) => {
       if (this.activeTabId !== id) return;
-      this.window.webContents.send('find-result', {
+      this.window.webContents.send(IPC_EVENTS.FIND_RESULT, {
         activeMatch: result.activeMatchOrdinal,
         matches: result.matches,
       });
@@ -411,6 +421,6 @@ export class TabManager {
 
   private broadcastState(): void {
     if (this.window.isDestroyed()) return;
-    this.window.webContents.send('browser-state', this.getState());
+    this.window.webContents.send(IPC_EVENTS.BROWSER_STATE, this.getState());
   }
 }

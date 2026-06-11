@@ -1,4 +1,4 @@
-import type { Bookmark } from '../types/browser';
+import type { Bookmark } from '../../types/browser';
 
 interface BookmarkBarProps {
   bookmarks: Bookmark[];
@@ -7,12 +7,11 @@ interface BookmarkBarProps {
 }
 
 export function BookmarkBar({ bookmarks, onNavigate, onRemove }: BookmarkBarProps) {
+  if (bookmarks.length === 0) return null;
+
   return (
     <div className="bookmark-bar">
-      {bookmarks.length === 0 ? (
-        <span className="bookmark-empty">Bookmarks — press Ctrl+D to save a page</span>
-      ) : (
-        bookmarks.map((bookmark) => (
+      {bookmarks.map((bookmark) => (
           <div key={bookmark.id} className="bookmark-item">
             <button
               type="button"
@@ -31,8 +30,7 @@ export function BookmarkBar({ bookmarks, onNavigate, onRemove }: BookmarkBarProp
               ×
             </button>
           </div>
-        ))
-      )}
+      ))}
     </div>
   );
 }

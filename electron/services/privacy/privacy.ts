@@ -1,14 +1,19 @@
-import { BrowserWindow, session, type Session } from 'electron';
+import { BrowserWindow, session, type Session, type WebContents } from 'electron';
+
+import { IPC_EVENTS } from '@shared/ipc/channels';
+import type { PrivacySettings, PrivacyStats } from '@shared/types';
+
 import {
   loadPrivacySettings,
   savePrivacySettings,
-  type PrivacySettings,
-} from './privacy-store';
-
-export interface PrivacyStats {
-  trackersBlocked: number;
-  permissionsDenied: number;
-}
+} from '../../stores/privacy-store';
+import {
+  attachSitePermissions,
+  bindPrivacySettingsProvider,
+  extractRequestOrigin,
+  isSensitivePermission,
+  resolveSitePermission,
+} from '../permissions/site-permissions';
 
 const TRACKER_DOMAINS = [
   'google-analytics.com',
@@ -41,10 +46,19 @@ const configuredSessions = new WeakSet<Session>();
 let settings = loadPrivacySettings();
 let stats: PrivacyStats = { trackersBlocked: 0, permissionsDenied: 0 };
 let mainWindow: BrowserWindow | null = null;
+const privacyStateTargets = new Set<WebContents>();
+
+export function registerPrivacyStateTarget(webContents: WebContents): () => void {
+  privacyStateTargets.add(webContents);
+  return () => {
+    privacyStateTargets.delete(webContents);
+  };
+}
 
 export function initPrivacy(window: BrowserWindow): void {
   mainWindow = window;
   settings = loadPrivacySettings();
+  bindPrivacySettingsProvider(() => settings);
   setupSession(session.defaultSession);
 }
 
@@ -87,6 +101,8 @@ function setupSession(sess: Session): void {
   if (configuredSessions.has(sess)) return;
   configuredSessions.add(sess);
 
+  attachSitePermissions(sess);
+
   sess.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
     if (!settings.blockTrackers || details.resourceType === 'mainFrame') {
       callback({});
@@ -118,40 +134,34 @@ function setupSession(sess: Session): void {
     callback({ requestHeaders: headers });
   });
 
-  sess.setPermissionRequestHandler((_webContents, permission, callback) => {
-    if (!settings.blockPermissions) {
-      callback(true);
-      return;
-    }
+  sess.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+    const origin = extractRequestOrigin(details);
+    const allowed = resolveSitePermission(origin, permission);
 
-    const sensitive = [
-      'media',
-      'geolocation',
-      'notifications',
-      'midiSysex',
-      'pointerLock',
-      'fullscreen',
-      'openExternal',
-      'unknown',
-    ];
-
-    if (sensitive.includes(permission)) {
+    if (!allowed && isSensitivePermission(permission)) {
       stats.permissionsDenied += 1;
       broadcastPrivacyState();
-      callback(false);
-      return;
     }
 
-    callback(true);
+    callback(allowed);
   });
 }
 
 function broadcastPrivacyState(): void {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.webContents.send('privacy-state', {
+  const payload = {
     settings: getPrivacySettings(),
     stats: getPrivacyStats(),
-  });
+  };
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(IPC_EVENTS.PRIVACY_STATE, payload);
+  }
+
+  for (const target of privacyStateTargets) {
+    if (!target.isDestroyed()) {
+      target.send(IPC_EVENTS.PRIVACY_STATE, payload);
+    }
+  }
 }
 
 export function broadcastInitialPrivacyState(): void {
