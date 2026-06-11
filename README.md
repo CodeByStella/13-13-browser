@@ -15,6 +15,7 @@ A privacy-focused desktop web browser built with Electron, TypeScript, React, an
 | [Privacy Policy](./docs/PRIVACY_POLICY.md) | Data handling and user privacy |
 | [Contributing](./CONTRIBUTING.md) | Development setup and PR guidelines |
 | [Architecture](./docs/ARCHITECTURE.md) | Technical design overview |
+| [Development workflow](./docs/WORKFLOW.md) | Editing, branches, and releases |
 | [Security](./SECURITY.md) | Vulnerability reporting |
 | [Changelog](./CHANGELOG.md) | Release history |
 | [Code of Conduct](./CODE_OF_CONDUCT.md) | Community guidelines |
@@ -362,6 +363,8 @@ Place app icons at `build/icon.png` and `build/icon.ico` (used for the window, t
 ## Automated releases
 
 GitHub Actions builds the Windows installer and publishes a [GitHub Release](https://github.com/CodeByStella/13-13-browser/releases) when you push a version tag.
+
+**Full guide:** [docs/WORKFLOW.md](./docs/WORKFLOW.md) — daily development, branches, tagging, and fixing releases.
 
 Workflow file: [`.github/workflows/release.yml`](./.github/workflows/release.yml)
 

@@ -8,6 +8,7 @@ Thank you for your interest in contributing. This document explains how to propo
 - [Ways to contribute](#ways-to-contribute)
 - [Development setup](#development-setup)
 - [Project layout](#project-layout)
+- [Development workflow](./docs/WORKFLOW.md) — editing, branches, releases
 - [Coding standards](#coding-standards)
 - [Commit messages](#commit-messages)
 - [Pull request process](#pull-request-process)
