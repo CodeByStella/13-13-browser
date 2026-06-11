@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/license-Proprietary-lightgrey)](./LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-36-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows)](./README.md)
+[![Donate](https://img.shields.io/badge/Donate-Crypto-F7931A?logo=bitcoin&logoColor=white)](https://nowpayments.io/donation/stellaray777)
 
 A privacy-focused desktop web browser built with Electron, TypeScript, React, and Vite. Designed for users who want everyday browsing with strong defaults for tracking protection, permission control, and screen-capture exclusion.
 
@@ -433,6 +434,10 @@ build/
 | React | 19 |
 | TypeScript | 5 |
 | Vite | 6 |
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=CodeByStella/13-13-browser&type=Date)](https://star-history.com/#CodeByStella/13-13-browser&Date)
 
 ## License
 
