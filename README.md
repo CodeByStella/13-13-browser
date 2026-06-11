@@ -38,6 +38,7 @@ A privacy-focused desktop web browser built with Electron, TypeScript, React, an
 - [Installation](#installation)
 - [Development](#development)
 - [Production](#production)
+- [Automated releases](#automated-releases)
 - [Project Structure](#project-structure)
 - [Technology Stack](#technology-stack)
 
@@ -348,13 +349,54 @@ pnpm build
 pnpm start
 ```
 
-Create a Windows installer:
+Create a Windows installer locally:
 
 ```bash
 pnpm dist
 ```
 
+Output lands in `release/` (for example `13.13 Browser Setup 1.0.0.exe`). The `release/` folder is gitignored.
+
 Place app icons at `build/icon.png` and `build/icon.ico` (used for the window, taskbar, and installer).
+
+## Automated releases
+
+GitHub Actions builds the Windows installer and publishes a [GitHub Release](https://github.com/CodeByStella/13-13-browser/releases) when you push a version tag.
+
+Workflow file: [`.github/workflows/release.yml`](./.github/workflows/release.yml)
+
+### Publish a release
+
+1. Bump the version in `package.json` (and update [CHANGELOG.md](./CHANGELOG.md) if needed).
+2. Commit and push to `main`:
+   ```bash
+   git add package.json CHANGELOG.md
+   git commit -m "chore: release v1.0.1"
+   git push origin main
+   ```
+3. Create and push a tag matching the version:
+   ```bash
+   git tag v1.0.1
+   git push origin v1.0.1
+   ```
+
+The workflow runs on `windows-latest`, executes `pnpm install` and `pnpm dist`, then attaches these files to the release:
+
+- `13.13 Browser Setup x.y.z.exe` — NSIS installer
+- `*.blockmap` — update metadata for electron-updater (future use)
+- `latest.yml` — update metadata for electron-updater (future use)
+
+Release notes are generated automatically from commits since the previous tag.
+
+### Manual build (no release)
+
+To build in CI without creating a GitHub Release, open **Actions → Release → Run workflow** in the repository. The installer is uploaded as a workflow artifact named `windows-installer`.
+
+### Notes
+
+- Tags must use the `v` prefix (e.g. `v1.0.1`, not `1.0.1`).
+- Installers are **unsigned** by default; Windows SmartScreen may warn on first run until code signing is configured in CI.
+- macOS and Linux builds are not part of the current workflow.
 
 ## Project Structure
 
