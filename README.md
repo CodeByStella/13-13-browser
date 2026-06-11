@@ -380,7 +380,7 @@ Workflow file: [`.github/workflows/release.yml`](./.github/workflows/release.yml
    git push origin v1.0.1
    ```
 
-The workflow runs on `windows-latest`, executes `pnpm install` and `pnpm dist`, then attaches these files to the release:
+The workflow runs on `windows-latest`, executes `pnpm install` and `pnpm run dist:ci` (build only — no electron-builder publish), then attaches these files to the release:
 
 - `13.13 Browser Setup x.y.z.exe` — NSIS installer
 - `*.blockmap` — update metadata for electron-updater (future use)

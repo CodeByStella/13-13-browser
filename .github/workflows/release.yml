@@ -32,7 +32,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Windows installer
-        run: pnpm run dist
+        run: pnpm run dist:ci
         env:
           CI: true
 
