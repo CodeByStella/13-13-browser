@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from 'electron';
 
-import { IPC_EVENTS } from '@shared/ipc/channels';
+import { getAppContext } from '../app/context';
+import { IPC, IPC_EVENTS } from '@shared/ipc/channels';
 import type { ChromePopupAnchor, PrivacySettings } from '@shared/types';
 
 import {
@@ -17,9 +18,9 @@ import {
 } from '../services/privacy/content-protection';
 import {
   computePopupBounds,
+  loadStaticPage,
   POPUP_WEB_PREFERENCES,
   preloadPath,
-  staticRoot,
 } from './popup-utils';
 
 export type { ChromePopupAnchor };
@@ -106,9 +107,10 @@ function ensurePrivacyPanelIpc(parent: BrowserWindow): void {
     return state;
   });
 
-  ipcMain.handle('privacy-panel-clear-data', async (event) => {
+  ipcMain.handle(IPC.PRIVACY_PANEL_CLEAR_DATA, async (event) => {
     if (!privacyWindow || event.sender !== privacyWindow.webContents) return;
     await clearBrowsingData();
+    getAppContext().getTabManager()?.reloadAllNormalTabs();
     sendPanelSnapshot();
   });
 }
@@ -161,7 +163,13 @@ export function showPrivacyPanel(
   parent.on('resize', onParentBoundsChange);
   parent.on('move', onParentBoundsChange);
 
-  privacyWindow.on('blur', () => closePrivacyPanel());
+  privacyWindow.on('blur', () => {
+    setTimeout(() => {
+      if (!privacyWindow || privacyWindow.isDestroyed()) return;
+      if (privacyWindow.isFocused()) return;
+      closePrivacyPanel();
+    }, 120);
+  });
   privacyWindow.on('closed', () => {
     parent.removeListener('resize', onParentBoundsChange);
     parent.removeListener('move', onParentBoundsChange);
@@ -177,7 +185,7 @@ export function showPrivacyPanel(
 
   unregisterPrivacyTarget = registerPrivacyStateTarget(privacyWindow.webContents);
 
-  void privacyWindow.loadFile(`${staticRoot(isDev)}/privacy-panel.html`);
+  loadStaticPage(privacyWindow.webContents, isDev, 'privacy-panel.html');
   privacyWindow.show();
   privacyWindow.focus();
 }

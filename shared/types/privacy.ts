@@ -3,6 +3,7 @@ export interface PrivacySettings {
   sendDoNotTrack: boolean;
   blockPermissions: boolean;
   clearOnExit: boolean;
+  screenCaptureProtection: boolean;
 }
 
 export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
@@ -10,6 +11,7 @@ export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
   sendDoNotTrack: true,
   blockPermissions: true,
   clearOnExit: false,
+  screenCaptureProtection: true,
 };
 
 export interface PrivacyStats {

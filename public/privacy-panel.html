@@ -131,8 +131,7 @@
 
       .privacy-score-card {
         display: flex;
-        flex-direction: column;
-        gap: 10px;
+        align-items: center;
         padding: 10px 12px;
         border-radius: 12px;
         border: 1px solid rgba(62, 207, 142, 0.2);
@@ -172,40 +171,6 @@
 
       .score-details strong { display: block; font-size: 0.85rem; color: var(--text); }
       .score-details span { font-size: 0.72rem; color: var(--text-muted); }
-
-      .score-breakdown {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-      }
-
-      .score-factor {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 1px;
-        padding: 5px 4px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: rgba(0, 0, 0, 0.18);
-        font-size: 0.62rem;
-        color: var(--text-muted);
-        line-height: 1.15;
-        text-align: center;
-      }
-
-      .score-factor.active {
-        border-color: rgba(62, 207, 142, 0.35);
-        color: var(--privacy);
-        background: rgba(62, 207, 142, 0.08);
-      }
-
-      .score-factor .factor-pts {
-        font-weight: 700;
-        font-size: 0.58rem;
-        opacity: 0.85;
-      }
 
       .privacy-stats {
         display: grid;
@@ -303,6 +268,22 @@
         cursor: pointer;
         box-shadow: var(--raised);
         font-family: inherit;
+        transition: opacity 0.15s ease, background 0.15s ease;
+      }
+
+      .clear-data-btn:hover:not(:disabled) {
+        background: linear-gradient(180deg, rgba(239, 107, 107, 0.18), rgba(239, 107, 107, 0.08));
+      }
+
+      .clear-data-btn:disabled {
+        opacity: 0.65;
+        cursor: wait;
+      }
+
+      .clear-data-btn.success {
+        border-color: rgba(62, 207, 142, 0.35);
+        background: linear-gradient(180deg, rgba(62, 207, 142, 0.14), rgba(62, 207, 142, 0.05));
+        color: var(--privacy);
       }
     </style>
   </head>
@@ -329,13 +310,6 @@
         { key: 'blockPermissions', label: 'Block sensitive permissions', desc: 'Deny camera, mic, location, and notifications by default' },
         { key: 'clearOnExit', label: 'Clear data on exit', desc: 'Wipe cache and storage when the browser closes' },
         { key: 'protection', label: 'Screen capture protection', desc: 'Hide window from screenshots and screen recording', isProtection: true },
-      ];
-
-      const SCORE_FACTORS = [
-        { key: 'blockTrackers', label: 'Trackers', points: 25 },
-        { key: 'sendDoNotTrack', label: 'DNT', points: 20 },
-        { key: 'blockPermissions', label: 'Permissions', points: 25 },
-        { key: 'protection', label: 'Capture', points: 30, isProtection: true },
       ];
 
       let state = {
@@ -374,12 +348,6 @@
                 <strong>Privacy score</strong>
                 <span>${scoreLabel(score)}</span>
               </div>
-            </div>
-            <div class="score-breakdown">
-              ${SCORE_FACTORS.map(({ key, label, points, isProtection }) => {
-                const active = isProtection ? state.protectionEnabled : state.settings[key];
-                return `<span class="score-factor${active ? ' active' : ''}"><span>${label}</span><span class="factor-pts">+${points}</span></span>`;
-              }).join('')}
             </div>
           </div>
           <div class="privacy-stats">
@@ -422,8 +390,30 @@
           });
         });
 
-        document.getElementById('clear-btn').addEventListener('click', async () => {
-          await window.privacyPanelApi.clearData();
+        const clearBtn = document.getElementById('clear-btn');
+        clearBtn.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+        });
+        clearBtn.addEventListener('click', async () => {
+          if (clearBtn.disabled) return;
+          clearBtn.disabled = true;
+          clearBtn.classList.remove('success');
+          clearBtn.textContent = 'Clearing…';
+          try {
+            await window.privacyPanelApi.clearData();
+            clearBtn.classList.add('success');
+            clearBtn.textContent = 'Browsing data cleared';
+          } catch {
+            clearBtn.textContent = 'Clear browsing data now';
+          } finally {
+            clearBtn.disabled = false;
+            setTimeout(() => {
+              if (clearBtn.textContent === 'Browsing data cleared') {
+                clearBtn.classList.remove('success');
+                clearBtn.textContent = 'Clear browsing data now';
+              }
+            }, 2200);
+          }
         });
       }
 

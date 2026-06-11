@@ -114,11 +114,16 @@ export function IconStar({ className, filled }: IconProps & { filled?: boolean }
   );
 }
 
-export function IconZoom({ className }: IconProps) {
+export function IconZoom({ className, sign = 'in' }: IconProps & { sign?: 'in' | 'out' }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
       <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.35-4.35M11 8v6M8 11h6" />
+      <path d="M21 21l-4.35-4.35" />
+      {sign === 'in' ? (
+        <path d="M11 8v6M8 11h6" />
+      ) : (
+        <path d="M8 11h6" />
+      )}
     </svg>
   );
 }
@@ -148,6 +153,48 @@ export function IconMore({ className }: IconProps) {
       <circle cx="12" cy="5.5" r="1.5" fill="currentColor" stroke="none" />
       <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
       <circle cx="12" cy="18.5" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconFolder({ className, open }: IconProps & { open?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M3 7h6l2 2h10v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+      {open && <path d="M8 13h8M12 9v8" strokeLinecap="round" opacity={0.85} />}
+    </svg>
+  );
+}
+
+export function IconChevronLeft({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+export function IconChevronRight({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
+export function IconChevronDown({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+export function IconLink({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M10 13a3 3 0 004.24 0l2.12-2.12a3 3 0 00-4.24-4.24l-1.06 1.06" />
+      <path d="M14 11a3 3 0 00-4.24 0L7.64 13.12a3 3 0 004.24 4.24l1.06-1.06" />
     </svg>
   );
 }

@@ -22,11 +22,28 @@ export interface ContentProtectionState {
   supported: boolean;
 }
 
-export interface Bookmark {
+export type BookmarkItemType = 'bookmark' | 'folder';
+
+export interface BookmarkNode {
+  id: string;
+  type: BookmarkItemType;
+  title: string;
+  url?: string;
+  favicon?: string;
+  parentId: string | null;
+  createdAt: number;
+}
+
+/** Flat bookmark list alias used across IPC and UI. */
+export type Bookmark = BookmarkNode;
+
+export interface BookmarkToggleResult {
+  addedId: string | null;
+}
+
+export interface BookmarkAddedPayload {
   id: string;
   title: string;
-  url: string;
-  createdAt: number;
 }
 
 export interface FindResult {

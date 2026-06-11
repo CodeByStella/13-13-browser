@@ -2,6 +2,9 @@ import { ipcRenderer } from 'electron';
 
 import { IPC, IPC_EVENTS } from '@shared/ipc/channels';
 import type {
+  AboutInfo,
+  AppSettings,
+  BookmarkMenuItemPayload,
   ChromeMenuItemPayload,
   ContentProtectionState,
   PrivacyPanelData,
@@ -10,7 +13,36 @@ import type {
   SitePermissionKey,
   SitePermissionsSnapshot,
   SitePermissionValue,
+  TraySettingsPanelData,
 } from '@shared/types';
+
+export const bookmarkMenuApi = {
+  onItems: (callback: (items: BookmarkMenuItemPayload[]) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, items: BookmarkMenuItemPayload[]) =>
+      callback(items);
+    ipcRenderer.on(IPC_EVENTS.BOOKMARK_MENU_ITEMS, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.BOOKMARK_MENU_ITEMS, listener);
+  },
+  onShowRename: (
+    callback: (payload: { id: string; defaultTitle: string }) => void,
+  ): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: { id: string; defaultTitle: string },
+    ) => callback(payload);
+    ipcRenderer.on(IPC_EVENTS.BOOKMARK_MENU_SHOW_RENAME, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.BOOKMARK_MENU_SHOW_RENAME, listener);
+  },
+  select: (id: string): Promise<void> => ipcRenderer.invoke(IPC.BOOKMARK_MENU_SELECT, id),
+  beginPrompt: (): Promise<void> => ipcRenderer.invoke(IPC.BOOKMARK_MENU_BEGIN_PROMPT),
+  resize: (width: number, height: number): Promise<void> =>
+    ipcRenderer.invoke(IPC.BOOKMARK_MENU_RESIZE, width, height),
+  close: (): Promise<void> => ipcRenderer.invoke(IPC.BOOKMARK_MENU_CLOSE),
+  rename: (id: string, title: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.BOOKMARK_MENU_RENAME, id, title),
+  createFolder: (parentId: string | null, title: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.BOOKMARK_MENU_CREATE_FOLDER, parentId, title),
+};
 
 export const chromeMenuApi = {
   onItems: (callback: (items: ChromeMenuItemPayload[]) => void): (() => void) => {
@@ -62,4 +94,34 @@ export const sitePermissionsApi = {
   close: (): Promise<void> => ipcRenderer.invoke(IPC.SITE_PERMISSIONS_CLOSE),
 };
 
-export type { ChromeMenuItemPayload, SitePermissionsSnapshot, SitePermissionKey, SitePermissionValue };
+export const traySettingsApi = {
+  onData: (callback: (data: TraySettingsPanelData) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: TraySettingsPanelData) =>
+      callback(data);
+    ipcRenderer.on(IPC_EVENTS.TRAY_SETTINGS_DATA, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.TRAY_SETTINGS_DATA, listener);
+  },
+  update: (partial: Partial<AppSettings>): Promise<TraySettingsPanelData> =>
+    ipcRenderer.invoke(IPC.TRAY_SETTINGS_UPDATE, partial),
+  hideNow: (): Promise<void> => ipcRenderer.invoke(IPC.HIDE_TO_TRAY),
+  close: (): Promise<void> => ipcRenderer.invoke(IPC.TRAY_SETTINGS_CLOSE),
+};
+
+export const aboutApi = {
+  onData: (callback: (data: AboutInfo) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: AboutInfo) => callback(data);
+    ipcRenderer.on(IPC_EVENTS.ABOUT_DATA, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.ABOUT_DATA, listener);
+  },
+  close: (): Promise<void> => ipcRenderer.invoke(IPC.ABOUT_CLOSE),
+  openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IPC.OPEN_EXTERNAL, url),
+};
+
+export type {
+  AboutInfo,
+  BookmarkMenuItemPayload,
+  ChromeMenuItemPayload,
+  SitePermissionsSnapshot,
+  SitePermissionKey,
+  SitePermissionValue,
+};

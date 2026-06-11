@@ -1,26 +1,35 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { findBookmarkByUrl } from '@shared/utils/bookmarks';
 
 import { BrowserChrome } from '../components/chrome/BrowserChrome';
 import { useBrowserSubscriptions } from '../features/browser/useBrowserSubscriptions';
 import { useAddressBar, useFindInPage } from '../features/browser/useFindInPage';
 import { useKeyboardShortcuts } from '../features/browser/useKeyboardShortcuts';
 
+interface RenameTarget {
+  id: string;
+  title: string;
+}
+
 export default function App() {
   const addressRef = useRef<HTMLInputElement>(null);
   const { browserState, protection, privacySettings, maximized, bookmarks } =
     useBrowserSubscriptions();
+  const [renameTarget, setRenameTarget] = useState<RenameTarget | null>(null);
 
   const activeTab =
     browserState.tabs.find((tab) => tab.id === browserState.activeTabId) ?? null;
 
   const isBookmarked = activeTab
-    ? bookmarks.some((bookmark) => bookmark.url === activeTab.url)
+    ? !!findBookmarkByUrl(bookmarks, activeTab.url)
     : false;
 
   const {
     findOpen,
     findQuery,
     findResult,
+    findInputRef,
     setFindQuery,
     closeFind,
     openFind,
@@ -35,17 +44,32 @@ export default function App() {
   } = useAddressBar(activeTab, addressRef);
 
   useKeyboardShortcuts({
-    browserState,
-    activeTab,
     findOpen,
     closeFind,
-    openFind,
     addressRef,
   });
 
+  useEffect(() => {
+    const unsub = window.browserApi.onBookmarkAdded((payload) => {
+      setRenameTarget({ id: payload.id, title: payload.title });
+    });
+    return unsub;
+  }, []);
+
+  const clearRenameTarget = useCallback(() => {
+    setRenameTarget(null);
+  }, []);
+
   const toggleBookmark = useCallback(async () => {
     if (!activeTab?.url) return;
-    await window.browserApi.toggleBookmark(activeTab.title, activeTab.url);
+    const { addedId } = await window.browserApi.toggleBookmark(
+      activeTab.title,
+      activeTab.url,
+      activeTab.favicon,
+    );
+    if (addedId) {
+      setRenameTarget({ id: addedId, title: activeTab.title });
+    }
   }, [activeTab]);
 
   return (
@@ -60,9 +84,12 @@ export default function App() {
         zoomLevel={browserState.zoomLevel}
         bookmarks={bookmarks}
         isBookmarked={isBookmarked}
+        renameTarget={renameTarget}
+        onRenameTargetHandled={clearRenameTarget}
         findOpen={findOpen}
         findQuery={findQuery}
         findResult={findResult}
+        findInputRef={findInputRef}
         addressRef={addressRef}
         onAddressChange={setAddressValue}
         onAddressFocus={onAddressFocus}
@@ -82,7 +109,13 @@ export default function App() {
         onSwitchTab={(id) => void window.browserApi.switchTab(id)}
         onCloseTab={(id) => void window.browserApi.closeTab(id)}
         onBookmarkNavigate={(url) => void handleNavigate(url)}
+        onBookmarkOpenInNewTab={(url) => void window.browserApi.createTab(url)}
         onRemoveBookmark={(id) => void window.browserApi.removeBookmark(id)}
+        onCreateBookmarkFolder={(title, parentId) =>
+          void window.browserApi.createBookmarkFolder(title, parentId)
+        }
+        onRenameBookmark={(id, title) => void window.browserApi.renameBookmark(id, title)}
+        onMoveBookmark={(id, parentId) => void window.browserApi.moveBookmark(id, parentId)}
         onFindQueryChange={setFindQuery}
         onFindNext={() => void window.browserApi.findNext(true)}
         onFindPrev={() => void window.browserApi.findNext(false)}

@@ -11,12 +11,12 @@ import {
   IconMore,
   IconReload,
   IconSearch,
-  IconShield,
   IconSitePermissions,
   IconStar,
   IconStop,
   IconZoom,
 } from '../ui/Icons';
+import { PrivacyShieldButton } from './PrivacyShieldButton';
 
 interface ToolbarProps {
   activeTab: TabInfo | null;
@@ -200,13 +200,13 @@ export function Toolbar({
 
           <div className="address-zoom-group">
             <button type="button" className="address-inline-btn" onClick={onZoomOut} aria-label="Zoom out">
-              <IconZoom />
+              <IconZoom sign="out" />
             </button>
             <button type="button" className="address-zoom-label" onClick={onZoomReset}>
               {zoomPercent}%
             </button>
-            <button type="button" className="address-inline-btn zoom-in-btn" onClick={onZoomIn} aria-label="Zoom in">
-              <IconZoom />
+            <button type="button" className="address-inline-btn" onClick={onZoomIn} aria-label="Zoom in">
+              <IconZoom sign="in" />
             </button>
           </div>
 
@@ -219,20 +219,10 @@ export function Toolbar({
           >
             <IconSearch />
           </button>
-
-          <button
-            ref={privacyButtonRef}
-            type="button"
-            className="address-privacy-btn"
-            onClick={openPrivacyPanel}
-            title="Privacy dashboard"
-            aria-label="Privacy dashboard"
-          >
-            <IconShield active={privacyScore >= 50} />
-            <span>{privacyScore}</span>
-          </button>
         </div>
       </form>
+
+      <PrivacyShieldButton ref={privacyButtonRef} score={privacyScore} onClick={openPrivacyPanel} />
 
       <div className="toolbar-menu">
         <button

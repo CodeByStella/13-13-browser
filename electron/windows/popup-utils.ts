@@ -4,9 +4,9 @@ import type { BrowserWindow } from 'electron';
 
 import type { ChromePopupAnchor } from '@shared/types';
 
-export function staticRoot(isDev: boolean): string {
-  return isDev ? path.join(__dirname, '../public') : path.join(__dirname, '../dist');
-}
+import { loadStaticPage, staticRoot, staticPageUrl } from '../lib/dev-static-pages';
+
+export { staticRoot, staticPageUrl, loadStaticPage };
 
 export function preloadPath(): string {
   return path.join(__dirname, 'preload.js');
@@ -44,6 +44,39 @@ export function computePopupBounds(
   const maxBottom = content.y + content.height - padding;
   if (screenY + height > maxBottom) {
     const anchorHeight = anchor.height ?? 28;
+    screenY = content.y + anchor.y - anchorHeight - 2 - height;
+  }
+  screenY = Math.max(content.y + padding, screenY);
+
+  return {
+    x: Math.round(screenX),
+    y: Math.round(screenY),
+    width,
+    height: Math.round(height),
+  };
+}
+
+export function computeMenuBoundsAtPoint(
+  parent: BrowserWindow,
+  anchor: ChromePopupAnchor,
+  menuWidth: number,
+  menuHeight: number,
+): { x: number; y: number; width: number; height: number } {
+  const content = parent.getContentBounds();
+  const padding = 8;
+  const width = menuWidth;
+  const height = Math.min(menuHeight, content.height - padding * 2);
+
+  let screenX = content.x + anchor.x;
+  let screenY = content.y + anchor.y;
+
+  if (screenX + width > content.x + content.width - padding) {
+    screenX = content.x + content.width - width - padding;
+  }
+  screenX = Math.max(content.x + padding, screenX);
+
+  const anchorHeight = anchor.height ?? 1;
+  if (screenY + height > content.y + content.height - padding) {
     screenY = content.y + anchor.y - anchorHeight - 2 - height;
   }
   screenY = Math.max(content.y + padding, screenY);

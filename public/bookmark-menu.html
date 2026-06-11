@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookmarks</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --surface: #111622;
+        --text: #eef2ff;
+        --text-muted: #8892b0;
+        --accent: #5b8def;
+        --danger: #ffb4b4;
+        --border: rgba(61, 74, 110, 0.55);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      .bookmark-menu {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow:
+          0 10px 28px rgba(0, 0, 0, 0.48),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .menu-panel {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+      }
+
+      .menu-section-label {
+        padding: 4px 10px 2px;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .menu-separator {
+        height: 1px;
+        margin: 4px 6px;
+        background: rgba(42, 51, 80, 0.55);
+      }
+
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 7px 10px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.76rem;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.12s ease;
+      }
+
+      .menu-item:hover {
+        background: rgba(91, 141, 239, 0.12);
+      }
+
+      .menu-item.danger {
+        color: var(--danger);
+      }
+
+      .menu-item.danger:hover {
+        background: rgba(239, 107, 107, 0.14);
+      }
+
+      .menu-item.indent {
+        padding-left: 18px;
+      }
+
+      .menu-item.disabled {
+        color: var(--text-muted);
+        cursor: default;
+      }
+
+      .menu-item.disabled:hover {
+        background: transparent;
+      }
+
+      .menu-favicon {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        border-radius: 2px;
+        object-fit: contain;
+      }
+
+      .menu-label {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .menu-arrow {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      .prompt-panel {
+        display: none;
+        padding: 8px;
+      }
+
+      .prompt-panel.active {
+        display: block;
+      }
+
+      .prompt-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+
+      .prompt-input {
+        width: 100%;
+        padding: 7px 9px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: rgba(10, 12, 16, 0.85);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.76rem;
+        outline: none;
+      }
+
+      .prompt-input:focus {
+        border-color: rgba(91, 141, 239, 0.65);
+        box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.18);
+      }
+
+      .prompt-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .prompt-btn {
+        padding: 5px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.72rem;
+        cursor: pointer;
+      }
+
+      .prompt-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .prompt-btn.primary {
+        border-color: rgba(91, 141, 239, 0.55);
+        background: rgba(91, 141, 239, 0.18);
+      }
+
+      .prompt-btn.primary:hover {
+        background: rgba(91, 141, 239, 0.28);
+      }
+
+      .menu-panel.hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bookmark-menu">
+      <div class="menu-panel" id="menu-panel">
+        <div role="menu" id="items"></div>
+      </div>
+      <div class="prompt-panel" id="prompt-panel">
+        <label class="prompt-label" id="prompt-label" for="prompt-input"></label>
+        <input class="prompt-input" id="prompt-input" type="text" autocomplete="off" spellcheck="false" />
+        <div class="prompt-actions">
+          <button type="button" class="prompt-btn" id="prompt-cancel">Cancel</button>
+          <button type="button" class="prompt-btn primary" id="prompt-ok">Save</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const menuPanel = document.getElementById('menu-panel');
+      const promptPanel = document.getElementById('prompt-panel');
+      const promptLabel = document.getElementById('prompt-label');
+      const promptInput = document.getElementById('prompt-input');
+      const promptCancel = document.getElementById('prompt-cancel');
+      const promptOk = document.getElementById('prompt-ok');
+
+      let pendingSubmit = null;
+
+      function syncWindowSize() {
+        const menu = document.querySelector('.bookmark-menu');
+        if (!menu) return;
+
+        const menuPadding = 12;
+        const menuBorder = 2;
+        const contentHeight = promptPanel.classList.contains('active')
+          ? promptPanel.scrollHeight
+          : document.getElementById('items').scrollHeight;
+        const width = Math.max(240, Math.ceil(menu.scrollWidth));
+        const height = Math.ceil(contentHeight + menuPadding + menuBorder);
+
+        void window.bookmarkMenuApi.resize(width, height);
+      }
+
+      function scheduleSyncWindowSize() {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(syncWindowSize);
+        });
+      }
+
+      function hidePrompt() {
+        promptPanel.classList.remove('active');
+        menuPanel.classList.remove('hidden');
+        pendingSubmit = null;
+      }
+
+      async function showPrompt(label, defaultValue, onSubmit) {
+        await window.bookmarkMenuApi.beginPrompt();
+        menuPanel.classList.add('hidden');
+        promptPanel.classList.add('active');
+        promptLabel.textContent = label;
+        promptInput.value = defaultValue;
+        pendingSubmit = onSubmit;
+        scheduleSyncWindowSize();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            promptInput.focus();
+            promptInput.select();
+          });
+        });
+      }
+
+      function submitPrompt() {
+        if (!pendingSubmit) return;
+        const value = promptInput.value.trim();
+        if (!value) return;
+        pendingSubmit(value);
+      }
+
+      promptOk.addEventListener('click', submitPrompt);
+      promptCancel.addEventListener('click', () => {
+        hidePrompt();
+        void window.bookmarkMenuApi.close();
+      });
+
+      promptInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          submitPrompt();
+        }
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          hidePrompt();
+          void window.bookmarkMenuApi.close();
+        }
+      });
+
+      function handleSelect(id, item) {
+        if (id === 'noop') return;
+
+        if (id.startsWith('rename:')) {
+          const itemId = id.slice('rename:'.length);
+          void showPrompt('Rename', item.promptDefault ?? '', (title) => {
+            void window.bookmarkMenuApi.rename(itemId, title);
+          });
+          return;
+        }
+
+        if (id.startsWith('new-folder:')) {
+          const raw = id.slice('new-folder:'.length);
+          const parentId = raw === 'root' ? null : raw;
+          void showPrompt('Folder name', 'New folder', (title) => {
+            void window.bookmarkMenuApi.createFolder(parentId, title);
+          });
+          return;
+        }
+
+        void window.bookmarkMenuApi.select(id);
+      }
+
+      function renderItems(items) {
+        const container = document.getElementById('items');
+        container.innerHTML = '';
+        hidePrompt();
+
+        items.forEach((item) => {
+          if (item.type === 'header') {
+            const label = document.createElement('div');
+            label.className = 'menu-section-label';
+            label.textContent = item.label;
+            container.appendChild(label);
+            return;
+          }
+
+          if (item.type === 'separator') {
+            const sep = document.createElement('div');
+            sep.className = 'menu-separator';
+            sep.setAttribute('role', 'separator');
+            container.appendChild(sep);
+            return;
+          }
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'menu-item';
+          if (item.danger) button.classList.add('danger');
+          if (item.indent) button.classList.add('indent');
+          if (item.id === 'noop') button.classList.add('disabled');
+          button.setAttribute('role', 'menuitem');
+          button.dataset.id = item.id;
+
+          if (item.favicon) {
+            const img = document.createElement('img');
+            img.className = 'menu-favicon';
+            img.src = item.favicon;
+            img.alt = '';
+            button.appendChild(img);
+          }
+
+          const label = document.createElement('span');
+          label.className = 'menu-label';
+          label.textContent = item.label;
+          button.appendChild(label);
+
+          if (item.id && item.id.startsWith('open-folder:')) {
+            const arrow = document.createElement('span');
+            arrow.className = 'menu-arrow';
+            arrow.textContent = '›';
+            button.appendChild(arrow);
+          }
+
+          button.addEventListener('click', () => handleSelect(item.id, item));
+          container.appendChild(button);
+        });
+
+        scheduleSyncWindowSize();
+      }
+
+      window.bookmarkMenuApi.onItems(renderItems);
+
+      window.bookmarkMenuApi.onShowRename((payload) => {
+        void showPrompt('Rename', payload.defaultTitle, (title) => {
+          void window.bookmarkMenuApi.rename(payload.id, title);
+        });
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !promptPanel.classList.contains('active')) {
+          void window.bookmarkMenuApi.close();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,36 +1,28 @@
-import { app, BrowserWindow } from 'electron';
-import fs from 'node:fs';
+import { BrowserWindow } from 'electron';
 import path from 'node:path';
 
 import { IPC_EVENTS } from '@shared/ipc/channels';
 import type { Bookmark } from '@shared/types';
 
-import { getContentProtectionState, setContentProtectionPreference } from '../services/privacy/content-protection';
+import { resolveAppIcon } from '../lib/app-branding';
+
+import { getContentProtectionState, isContentProtectionEnabled, setContentProtectionPreference } from '../services/privacy/content-protection';
 import { normalizeDevServerUrl, waitForDevServer } from '../lib/dev-server';
+import { startDevReloadWatcher } from '../lib/dev-reload';
 import {
   broadcastInitialPrivacyState,
   clearOnExitIfEnabled,
   initPrivacy,
 } from '../services/privacy/privacy';
 import { getBookmarksService } from '../ipc/bookmarks.ipc';
-import { loadSession } from '../stores/session-store';
-import { isDevServerUrl } from '../lib/shared';
 import { TabManager } from '../services/tabs/tab-manager';
+import {
+  hideToTray,
+  isAppQuitting,
+  setTrayMainWindow,
+  shouldCloseToTray,
+} from '../services/tray/tray-manager';
 import type { AppContext } from './context';
-
-function resolveAppIcon(): string | undefined {
-  const candidates = [
-    path.join(__dirname, '../build/icon.ico'),
-    path.join(__dirname, '../build/icon.png'),
-    path.join(app.getAppPath(), 'build/icon.ico'),
-    path.join(app.getAppPath(), 'build/icon.png'),
-  ];
-  return candidates.find((candidate) => fs.existsSync(candidate));
-}
-
-function sanitizeSessionTabs(tabs: string[]): string[] {
-  return tabs.filter((url) => !isDevServerUrl(url) && !url.startsWith('file://'));
-}
 
 function applyContentProtection(win: BrowserWindow, enabled: boolean): void {
   setContentProtectionPreference(enabled);
@@ -41,6 +33,7 @@ export interface MainWindowHandles {
   mainWindow: BrowserWindow;
   tabManager: TabManager;
   buildContext: (bookmarks: Bookmark[], broadcastBookmarks: () => void) => AppContext;
+  stopDevReload?: () => void;
 }
 
 export async function createMainWindow(): Promise<MainWindowHandles> {
@@ -79,26 +72,28 @@ export async function createMainWindow(): Promise<MainWindowHandles> {
     tabManager.layout();
     mainWindow.webContents.send(IPC_EVENTS.WINDOW_MAXIMIZED, false);
   });
-  mainWindow.on('close', () => {
+  mainWindow.on('close', (event) => {
+    if (!isAppQuitting() && shouldCloseToTray()) {
+      event.preventDefault();
+      tabManager.persistSession();
+      void clearOnExitIfEnabled();
+      hideToTray();
+      return;
+    }
     tabManager.persistSession();
     void clearOnExitIfEnabled();
   });
 
-  applyContentProtection(mainWindow, true);
+  setTrayMainWindow(mainWindow);
+
+  applyContentProtection(mainWindow, isContentProtectionEnabled());
 
   let tabsInitialized = false;
   const initTabs = (): void => {
     if (tabsInitialized) return;
     tabsInitialized = true;
 
-    const session = loadSession();
-    const restored = session ? sanitizeSessionTabs(session.tabs) : [];
-
-    if (restored.length > 0) {
-      tabManager.restoreSession({ tabs: restored, activeIndex: session!.activeIndex });
-    } else {
-      tabManager.createTab();
-    }
+    tabManager.createTab();
 
     broadcastInitialPrivacyState();
     mainWindow.webContents.send(IPC_EVENTS.CONTENT_PROTECTION_STATE, getContentProtectionState());
@@ -126,9 +121,12 @@ export async function createMainWindow(): Promise<MainWindowHandles> {
     await mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  const stopDevReload = isDev ? startDevReloadWatcher(mainWindow, tabManager) : undefined;
+
   return {
     mainWindow,
     tabManager,
+    stopDevReload,
     buildContext: (bookmarks, broadcastBookmarks) => ({
       getMainWindow: () => mainWindow,
       getTabManager: () => tabManager,

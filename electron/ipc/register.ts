@@ -1,3 +1,4 @@
+import { registerAppSettingsIpc } from './app-settings.ipc';
 import { initBookmarksService, registerBookmarksIpc, getBookmarksService } from './bookmarks.ipc';
 import { registerChromeIpc, registerPrivacyIpc, registerWindowIpc } from './chrome.ipc';
 import { registerTabsIpc } from './tabs.ipc';
@@ -9,6 +10,7 @@ export function registerAllIpc(onBookmarksChange: (bookmarks: Bookmark[]) => voi
   registerBookmarksIpc();
   registerChromeIpc();
   registerPrivacyIpc();
+  registerAppSettingsIpc();
   registerWindowIpc();
 }
 

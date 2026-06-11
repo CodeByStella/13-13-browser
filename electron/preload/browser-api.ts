@@ -2,7 +2,10 @@ import { ipcRenderer } from 'electron';
 
 import { IPC, IPC_EVENTS } from '@shared/ipc/channels';
 import type {
+  AppSettings,
   Bookmark,
+  BookmarkAddedPayload,
+  BookmarkToggleResult,
   BrowserState,
   ContentProtectionState,
   FindResult,
@@ -34,10 +37,16 @@ export const browserApi = {
   stopFindInPage: (): Promise<void> => ipcRenderer.invoke(IPC.STOP_FIND_IN_PAGE),
   toggleDevTools: (): Promise<void> => ipcRenderer.invoke(IPC.TOGGLE_DEVTOOLS),
   getBookmarks: (): Promise<Bookmark[]> => ipcRenderer.invoke(IPC.GET_BOOKMARKS),
-  toggleBookmark: (title: string, url: string): Promise<Bookmark[]> =>
-    ipcRenderer.invoke(IPC.TOGGLE_BOOKMARK, title, url),
+  toggleBookmark: (title: string, url: string, favicon?: string): Promise<BookmarkToggleResult> =>
+    ipcRenderer.invoke(IPC.TOGGLE_BOOKMARK, title, url, favicon),
   removeBookmark: (id: string): Promise<Bookmark[]> =>
     ipcRenderer.invoke(IPC.REMOVE_BOOKMARK, id),
+  createBookmarkFolder: (title: string, parentId?: string | null): Promise<Bookmark[]> =>
+    ipcRenderer.invoke(IPC.CREATE_BOOKMARK_FOLDER, title, parentId ?? null),
+  renameBookmark: (id: string, title: string): Promise<Bookmark[]> =>
+    ipcRenderer.invoke(IPC.RENAME_BOOKMARK, id, title),
+  moveBookmark: (id: string, parentId: string | null): Promise<Bookmark[]> =>
+    ipcRenderer.invoke(IPC.MOVE_BOOKMARK, id, parentId),
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IPC.OPEN_EXTERNAL, url),
   setContentProtection: (enabled: boolean): Promise<ContentProtectionState> =>
     ipcRenderer.invoke(IPC.SET_CONTENT_PROTECTION, enabled),
@@ -57,6 +66,20 @@ export const browserApi = {
     anchor: { x: number; y: number; width: number; height?: number },
     toggle?: boolean,
   ): Promise<void> => ipcRenderer.invoke(IPC.SHOW_SITE_PERMISSIONS, anchor, toggle),
+  showBookmarkContextMenu: (
+    anchor: { x: number; y: number; width: number; height?: number },
+    targetId: string | null,
+  ): Promise<void> => ipcRenderer.invoke(IPC.SHOW_BOOKMARK_CONTEXT_MENU, anchor, targetId),
+  showBookmarkFolderMenu: (
+    anchor: { x: number; y: number; width: number; height?: number },
+    folderId: string,
+  ): Promise<void> => ipcRenderer.invoke(IPC.SHOW_BOOKMARK_FOLDER_MENU, anchor, folderId),
+  showBookmarkRename: (
+    anchor: { x: number; y: number; width: number; height?: number },
+    bookmarkId: string,
+    defaultTitle: string,
+  ): Promise<void> =>
+    ipcRenderer.invoke(IPC.SHOW_BOOKMARK_RENAME, anchor, bookmarkId, defaultTitle),
   getPrivacyState: (): Promise<PrivacyState> => ipcRenderer.invoke(IPC.GET_PRIVACY_STATE),
   updatePrivacySettings: (partial: Partial<PrivacySettings>): Promise<PrivacySettings> =>
     ipcRenderer.invoke(IPC.UPDATE_PRIVACY_SETTINGS, partial),
@@ -65,6 +88,10 @@ export const browserApi = {
   windowToggleMaximize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_TOGGLE_MAXIMIZE),
   windowClose: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW_CLOSE),
   windowIsMaximized: (): Promise<boolean> => ipcRenderer.invoke(IPC.WINDOW_IS_MAXIMIZED),
+  getAppSettings: (): Promise<AppSettings> => ipcRenderer.invoke(IPC.GET_APP_SETTINGS),
+  updateAppSettings: (partial: Partial<AppSettings>): Promise<AppSettings> =>
+    ipcRenderer.invoke(IPC.UPDATE_APP_SETTINGS, partial),
+  hideToTray: (): Promise<void> => ipcRenderer.invoke(IPC.HIDE_TO_TRAY),
   onBrowserState: (callback: (state: BrowserState) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, state: BrowserState) => callback(state);
     ipcRenderer.on(IPC_EVENTS.BROWSER_STATE, listener);
@@ -82,6 +109,12 @@ export const browserApi = {
     const listener = (_event: Electron.IpcRendererEvent, items: Bookmark[]) => callback(items);
     ipcRenderer.on(IPC_EVENTS.BOOKMARKS_UPDATED, listener);
     return () => ipcRenderer.removeListener(IPC_EVENTS.BOOKMARKS_UPDATED, listener);
+  },
+  onBookmarkAdded: (callback: (payload: BookmarkAddedPayload) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: BookmarkAddedPayload) =>
+      callback(payload);
+    ipcRenderer.on(IPC_EVENTS.BOOKMARK_ADDED, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.BOOKMARK_ADDED, listener);
   },
   onFindResult: (callback: (result: FindResult) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, result: FindResult) => callback(result);

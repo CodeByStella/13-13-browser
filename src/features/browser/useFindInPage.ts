@@ -1,19 +1,37 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 import type { FindResult, TabInfo } from '@shared/types';
+import { formatAddressBarUrl } from '@shared/utils/url';
 
 export function useFindInPage() {
   const [findOpen, setFindOpen] = useState(false);
   const [findQuery, setFindQuery] = useState('');
   const [findResult, setFindResult] = useState<FindResult>({ activeMatch: 0, matches: 0 });
   const findDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  const focusFindInput = useCallback(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        findInputRef.current?.focus();
+        findInputRef.current?.select();
+      });
+    });
+  }, []);
 
   useEffect(() => {
     const unsub = window.browserApi.onChromeMenuAction((action) => {
-      if (action === 'open-find') setFindOpen(true);
+      if (action === 'open-find') {
+        setFindOpen(true);
+        focusFindInput();
+      }
     });
     return unsub;
-  }, []);
+  }, [focusFindInput]);
+
+  useEffect(() => {
+    if (findOpen) focusFindInput();
+  }, [findOpen, focusFindInput]);
 
   useEffect(() => {
     if (!findOpen) return;
@@ -40,12 +58,16 @@ export function useFindInPage() {
     void window.browserApi.stopFindInPage();
   }, []);
 
-  const openFind = useCallback(() => setFindOpen(true), []);
+  const openFind = useCallback(() => {
+    setFindOpen(true);
+    focusFindInput();
+  }, [focusFindInput]);
 
   return {
     findOpen,
     findQuery,
     findResult,
+    findInputRef,
     setFindQuery,
     closeFind,
     openFind,
@@ -58,14 +80,14 @@ export function useAddressBar(activeTab: TabInfo | null, addressRef: RefObject<H
 
   useEffect(() => {
     if (activeTab && !addressFocused) {
-      setAddressValue(activeTab.url);
+      setAddressValue(formatAddressBarUrl(activeTab.url));
     }
-  }, [activeTab?.url, addressFocused]);
+  }, [activeTab?.url, activeTab?.isLoading, addressFocused]);
 
   const handleNavigate = useCallback(async (rawUrl?: string) => {
     const target = rawUrl ?? addressValue;
     const url = await window.browserApi.navigate(target);
-    setAddressValue(url);
+    setAddressValue(formatAddressBarUrl(url));
     addressRef.current?.blur();
   }, [addressRef, addressValue]);
 

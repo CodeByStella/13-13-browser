@@ -4,8 +4,6 @@ import {
   type WebContents,
 } from 'electron';
 import { randomUUID } from 'node:crypto';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { IPC_EVENTS } from '@shared/ipc/channels';
 import {
   CHROME_HEIGHT,
@@ -17,14 +15,19 @@ import {
   type BrowserState,
   type TabInfo,
 } from '../../lib/shared';
+import { staticPageUrl } from '../../lib/dev-static-pages';
 import { saveSession, type SessionData } from '../../stores/session-store';
 import { attachPrivacySession } from '../privacy/privacy';
+import { attachKeyboardShortcuts } from '../../lib/keyboard-shortcuts';
+import { brandDevToolsWindows, DEVTOOLS_WINDOW_TITLE } from '../../lib/app-branding';
 
 interface Tab {
   id: string;
   view: BrowserView;
   favicon?: string;
   isPrivate: boolean;
+  /** URL being loaded or that failed — shown in chrome while internal page is visible. */
+  pendingUrl?: string;
 }
 
 const ZOOM_STEP = 0.1;
@@ -40,15 +43,15 @@ export class TabManager {
   private webContentHidden = false;
   private readonly newTabPageUrl: string;
   private readonly errorPageUrl: string;
+  private readonly newTabFaviconUrl: string;
+  private readonly errorFaviconUrl: string;
 
   constructor(window: BrowserWindow, isDev: boolean) {
     this.window = window;
-    const staticDir = isDev
-      ? path.join(__dirname, '../public')
-      : path.join(__dirname, '../dist');
-
-    this.newTabPageUrl = pathToFileURL(path.join(staticDir, 'newtab.html')).href;
-    this.errorPageUrl = pathToFileURL(path.join(staticDir, 'error.html')).href;
+    this.newTabPageUrl = staticPageUrl(isDev, 'newtab.html');
+    this.errorPageUrl = staticPageUrl(isDev, 'error.html');
+    this.newTabFaviconUrl = staticPageUrl(isDev, 'newtab-icon.svg');
+    this.errorFaviconUrl = staticPageUrl(isDev, 'error-icon.svg');
   }
 
   restoreSession(session: SessionData): void {
@@ -84,6 +87,10 @@ export class TabManager {
     this.tabs.set(id, { id, view, isPrivate });
     this.tabOrder.push(id);
 
+    if (!url || url === this.newTabPageUrl) {
+      this.tabs.get(id)!.favicon = this.newTabFaviconUrl;
+    }
+
     const activate = options?.activate !== false;
     if (activate) {
       const current = this.getActiveTab();
@@ -98,6 +105,10 @@ export class TabManager {
     }
 
     view.webContents.loadURL(url ?? this.newTabPageUrl);
+    const tabEntry = this.tabs.get(id)!;
+    if (url && !this.isInternalPage(url)) {
+      tabEntry.pendingUrl = url;
+    }
     this.broadcastState();
     return id;
   }
@@ -122,7 +133,7 @@ export class TabManager {
     if (this.tabs.size === 0) {
       this.activeTabId = null;
       this.broadcastState();
-      this.window.close();
+      this.createTab();
       return;
     }
 
@@ -176,12 +187,16 @@ export class TabManager {
     if (!tab) return rawUrl;
 
     const url = normalizeUrl(rawUrl, this.newTabPageUrl);
+    tab.pendingUrl = this.isInternalPage(url) ? undefined : url;
     tab.view.webContents.loadURL(url);
     return this.isInternalPage(url) ? '' : url;
   }
 
   goHome(): void {
-    this.getActiveTab()?.view.webContents.loadURL(this.newTabPageUrl);
+    const tab = this.getActiveTab();
+    if (!tab) return;
+    tab.favicon = this.newTabFaviconUrl;
+    tab.view.webContents.loadURL(this.newTabPageUrl);
   }
 
   goBack(): void {
@@ -196,6 +211,17 @@ export class TabManager {
 
   reload(): void {
     this.getActiveWebContents()?.reload();
+  }
+
+  reloadAllNormalTabs(): void {
+    for (const tab of this.tabs.values()) {
+      if (tab.isPrivate) continue;
+      const wc = tab.view.webContents;
+      if (wc.isDestroyed()) continue;
+      if (wc.isLoading()) wc.stop();
+      wc.reloadIgnoringCache();
+    }
+    this.broadcastState();
   }
 
   stop(): void {
@@ -216,7 +242,7 @@ export class TabManager {
     const wc = this.getActiveWebContents();
     if (!wc) return;
     if (wc.isDevToolsOpened()) wc.closeDevTools();
-    else wc.openDevTools({ mode: 'detach' });
+    else wc.openDevTools({ mode: 'detach', title: DEVTOOLS_WINDOW_TITLE });
   }
 
   zoomIn(): number {
@@ -285,8 +311,19 @@ export class TabManager {
   getActiveTabUrl(): string {
     const tab = this.getActiveTab();
     if (!tab) return '';
+    return this.getDisplayUrl(tab);
+  }
+
+  getActivePageInfo(): { title: string; url: string; favicon?: string } | null {
+    const tab = this.getActiveTab();
+    if (!tab) return null;
     const rawUrl = tab.view.webContents.getURL();
-    return this.isInternalPage(rawUrl) ? '' : rawUrl;
+    if (this.isInternalPage(rawUrl)) return null;
+    return {
+      title: tab.view.webContents.getTitle() || 'New Tab',
+      url: rawUrl,
+      favicon: tab.favicon,
+    };
   }
 
   private setZoom(factor: number): number {
@@ -298,20 +335,70 @@ export class TabManager {
     return clamped;
   }
 
-  private isInternalPage(url: string): boolean {
+  private isNewTabPage(url: string): boolean {
+    return this.matchesInternalPage(url, this.newTabPageUrl, 'newtab.html');
+  }
+
+  private isErrorPage(url: string): boolean {
+    return this.matchesInternalPage(url, this.errorPageUrl, 'error.html');
+  }
+
+  private matchesInternalPage(url: string, pageUrl: string, filename: string): boolean {
     if (!url) return false;
+    if (url === pageUrl || url.startsWith(`${pageUrl.split('?')[0]}`)) return true;
 
     try {
       const parsed = new URL(url);
-      if (parsed.protocol !== 'file:') return false;
-
-      const pathname = parsed.pathname.toLowerCase();
-      const newTabPath = new URL(this.newTabPageUrl).pathname.toLowerCase();
-      const errorPath = new URL(this.errorPageUrl).pathname.toLowerCase();
-      return pathname === newTabPath || pathname === errorPath;
+      if (parsed.protocol === 'file:') {
+        return parsed.pathname.toLowerCase().endsWith(`/${filename}`);
+      }
+      if (isDevServerUrl(url)) {
+        return parsed.pathname.toLowerCase() === `/${filename}`;
+      }
     } catch {
-      return url.startsWith(this.newTabPageUrl) || url.startsWith(this.errorPageUrl);
+      // ignore malformed URLs
     }
+
+    return false;
+  }
+
+  private syncBuiltInFavicon(tab: Tab, url: string): void {
+    if (this.isNewTabPage(url)) {
+      tab.favicon = this.newTabFaviconUrl;
+      return;
+    }
+
+    if (this.isErrorPage(url)) {
+      tab.favicon = this.errorFaviconUrl;
+      return;
+    }
+
+    tab.favicon = undefined;
+  }
+
+  private getFailedUrlFromErrorPage(url: string): string | null {
+    if (!this.isErrorPage(url)) return null;
+    try {
+      return new URL(url).searchParams.get('url') || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getDisplayUrl(tab: Tab): string {
+    const rawUrl = tab.view.webContents.getURL();
+    const failedUrl = this.getFailedUrlFromErrorPage(rawUrl);
+    if (failedUrl) return failedUrl;
+
+    if (this.isInternalPage(rawUrl)) {
+      return tab.pendingUrl ?? '';
+    }
+
+    return rawUrl;
+  }
+
+  private isInternalPage(url: string): boolean {
+    return this.isNewTabPage(url) || this.isErrorPage(url);
   }
 
   private getActiveTab(): Tab | undefined {
@@ -346,6 +433,8 @@ export class TabManager {
   private attachViewEvents(id: string, view: BrowserView): void {
     const wc = view.webContents;
 
+    attachKeyboardShortcuts(wc);
+
     wc.setWindowOpenHandler(({ url }) => {
       this.createTab(url);
       return { action: 'deny' };
@@ -358,26 +447,59 @@ export class TabManager {
       notify();
     });
 
+    wc.on('will-navigate', (_event, url) => {
+      const tabEntry = this.tabs.get(id);
+      if (!tabEntry || this.isInternalPage(url)) return;
+      tabEntry.pendingUrl = url;
+      notify();
+    });
+
     wc.on('did-stop-loading', () => {
       this.setLoadingProgress(false);
       notify();
     });
 
-    wc.on('did-navigate', notify);
-    wc.on('did-navigate-in-page', notify);
+    wc.on('did-navigate', (_event, url) => {
+      const tabEntry = this.tabs.get(id);
+      if (tabEntry) {
+        this.syncBuiltInFavicon(tabEntry, url);
+        if (!this.isInternalPage(url)) {
+          tabEntry.pendingUrl = undefined;
+        }
+      }
+      notify();
+    });
+
+    wc.on('did-navigate-in-page', (_event, url) => {
+      const tabEntry = this.tabs.get(id);
+      if (tabEntry) {
+        this.syncBuiltInFavicon(tabEntry, url);
+        if (!this.isInternalPage(url)) {
+          tabEntry.pendingUrl = undefined;
+        }
+      }
+      notify();
+    });
     wc.on('page-title-updated', notify);
 
     wc.on('page-favicon-updated', (_event, favicons) => {
       const tabEntry = this.tabs.get(id);
-      if (tabEntry && favicons[0]) {
+      if (!tabEntry || !favicons[0]) return;
+
+      const currentUrl = wc.getURL();
+      if (this.isNewTabPage(currentUrl)) {
+        tabEntry.favicon = this.newTabFaviconUrl;
+      } else if (this.isErrorPage(currentUrl)) {
+        tabEntry.favicon = this.errorFaviconUrl;
+      } else {
         tabEntry.favicon = favicons[0];
-        this.broadcastState();
       }
+      this.broadcastState();
     });
 
     wc.on('did-fail-load', (_event, errorCode, _desc, validatedURL, isMainFrame) => {
       if (!isMainFrame || errorCode === -3) return;
-      if (validatedURL.startsWith(this.errorPageUrl)) return;
+      if (this.isErrorPage(validatedURL)) return;
 
       // Retry when dev server is still starting (connection refused)
       if (errorCode === -102 && isDevServerUrl(validatedURL)) {
@@ -389,7 +511,11 @@ export class TabManager {
         code: String(errorCode),
         url: validatedURL,
       });
-      wc.loadURL(`${this.errorPageUrl}?${params.toString()}`);
+      const tabEntry = this.tabs.get(id);
+      if (tabEntry && validatedURL) {
+        tabEntry.pendingUrl = validatedURL;
+      }
+      wc.loadURL(`${this.errorPageUrl}?${params.toString()}`, { replace: true });
     });
 
     wc.on('found-in-page', (_event, result) => {
@@ -399,12 +525,17 @@ export class TabManager {
         matches: result.matches,
       });
     });
+
+    wc.on('devtools-opened', () => {
+      // Detached DevTools defaults to Electron branding in dev; apply our title/icon.
+      setImmediate(() => brandDevToolsWindows());
+    });
   }
 
   private toTabInfo(tab: Tab): TabInfo {
     const wc = tab.view.webContents;
     const rawUrl = wc.getURL();
-    const url = this.isInternalPage(rawUrl) ? '' : rawUrl;
+    const url = this.getDisplayUrl(tab);
     return {
       id: tab.id,
       title: wc.getTitle() || 'New Tab',
@@ -413,7 +544,7 @@ export class TabManager {
       canGoBack: canGoBack(wc),
       canGoForward: canGoForward(wc),
       isActive: tab.id === this.activeTabId,
-      isSecure: isSecureUrl(rawUrl),
+      isSecure: isSecureUrl(this.getFailedUrlFromErrorPage(rawUrl) ?? rawUrl),
       favicon: tab.favicon,
       isPrivate: tab.isPrivate,
     };

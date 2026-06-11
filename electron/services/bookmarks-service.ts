@@ -1,48 +1,121 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Bookmark } from '@shared/types';
+import type { BookmarkNode } from '@shared/types';
+import {
+  collectDescendantIds,
+  findBookmarkByUrl,
+  isBookmarkItem,
+  isFolderItem,
+} from '@shared/utils/bookmarks';
 
 import { loadBookmarks, saveBookmarks } from '../stores/bookmarks-store';
 
 export class BookmarksService {
-  private bookmarks: Bookmark[] = loadBookmarks();
+  private nodes: BookmarkNode[] = loadBookmarks();
 
-  constructor(private readonly onChange: (bookmarks: Bookmark[]) => void) {}
+  constructor(private readonly onChange: (bookmarks: BookmarkNode[]) => void) {}
 
-  getAll(): Bookmark[] {
-    return this.bookmarks;
+  getAll(): BookmarkNode[] {
+    return this.nodes;
   }
 
-  replace(bookmarks: Bookmark[]): Bookmark[] {
-    this.bookmarks = bookmarks;
-    saveBookmarks(this.bookmarks);
-    this.onChange(this.bookmarks);
-    return this.bookmarks;
+  replace(nodes: BookmarkNode[]): BookmarkNode[] {
+    this.nodes = nodes;
+    saveBookmarks(this.nodes);
+    this.onChange(this.nodes);
+    return this.nodes;
   }
 
-  add(title: string, url: string): Bookmark[] {
-    if (!url || url.startsWith('file://')) return this.bookmarks;
-    if (this.bookmarks.some((bookmark) => bookmark.url === url)) return this.bookmarks;
+  createFolder(title: string, parentId: string | null = null): BookmarkNode[] {
+    const name = title.trim() || 'New folder';
+    if (parentId && !this.nodes.some((item) => item.id === parentId && isFolderItem(item))) {
+      return this.nodes;
+    }
 
-    this.bookmarks = [
-      { id: randomUUID(), title: title || url, url, createdAt: Date.now() },
-      ...this.bookmarks,
+    this.nodes = [
+      ...this.nodes,
+      {
+        id: randomUUID(),
+        type: 'folder',
+        title: name,
+        parentId,
+        createdAt: Date.now(),
+      },
     ];
-    saveBookmarks(this.bookmarks);
-    this.onChange(this.bookmarks);
-    return this.bookmarks;
+    saveBookmarks(this.nodes);
+    this.onChange(this.nodes);
+    return this.nodes;
   }
 
-  remove(id: string): Bookmark[] {
-    this.bookmarks = this.bookmarks.filter((bookmark) => bookmark.id !== id);
-    saveBookmarks(this.bookmarks);
-    this.onChange(this.bookmarks);
-    return this.bookmarks;
+  add(title: string, url: string, parentId: string | null = null, favicon?: string): string | null {
+    if (!url || url.startsWith('file://')) return null;
+    if (findBookmarkByUrl(this.nodes, url)) return null;
+    if (parentId && !this.nodes.some((item) => item.id === parentId && isFolderItem(item))) {
+      return null;
+    }
+
+    const id = randomUUID();
+    this.nodes = [
+      ...this.nodes,
+      {
+        id,
+        type: 'bookmark',
+        title: title || url,
+        url,
+        ...(favicon ? { favicon } : {}),
+        parentId,
+        createdAt: Date.now(),
+      },
+    ];
+    saveBookmarks(this.nodes);
+    this.onChange(this.nodes);
+    return id;
   }
 
-  toggle(title: string, url: string): Bookmark[] {
-    const existing = this.bookmarks.find((bookmark) => bookmark.url === url);
-    if (existing) return this.remove(existing.id);
-    return this.add(title, url);
+  rename(id: string, title: string): BookmarkNode[] {
+    const name = title.trim();
+    if (!name) return this.nodes;
+
+    this.nodes = this.nodes.map((item) =>
+      item.id === id ? { ...item, title: name } : item,
+    );
+    saveBookmarks(this.nodes);
+    this.onChange(this.nodes);
+    return this.nodes;
+  }
+
+  move(id: string, parentId: string | null): BookmarkNode[] {
+    const item = this.nodes.find((node) => node.id === id);
+    if (!item) return this.nodes;
+
+    if (parentId === id) return this.nodes;
+    if (parentId && collectDescendantIds(this.nodes, id).has(parentId)) return this.nodes;
+    if (parentId && !this.nodes.some((node) => node.id === parentId && isFolderItem(node))) {
+      return this.nodes;
+    }
+
+    this.nodes = this.nodes.map((node) =>
+      node.id === id ? { ...node, parentId } : node,
+    );
+    saveBookmarks(this.nodes);
+    this.onChange(this.nodes);
+    return this.nodes;
+  }
+
+  remove(id: string): BookmarkNode[] {
+    const removeIds = collectDescendantIds(this.nodes, id);
+    this.nodes = this.nodes.filter((item) => !removeIds.has(item.id));
+    saveBookmarks(this.nodes);
+    this.onChange(this.nodes);
+    return this.nodes;
+  }
+
+  toggle(title: string, url: string, favicon?: string): { addedId: string | null } {
+    const existing = findBookmarkByUrl(this.nodes, url);
+    if (existing) {
+      this.remove(existing.id);
+      return { addedId: null };
+    }
+    return { addedId: this.add(title, url, null, favicon) };
   }
 }

@@ -16,12 +16,18 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
     strictPort: true,
+    watch: {
+      ignored: ['**/release/**', '**/dist/**', '**/dist-electron/**'],
+    },
   },
   plugins: [
     react(),
     electron({
       main: {
         entry: 'electron/main.ts',
+        onstart({ startup }) {
+          startup();
+        },
         vite: {
           resolve: { alias: sharedAlias },
           build: {

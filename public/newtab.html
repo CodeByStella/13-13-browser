@@ -4,174 +4,1388 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Tab — 13.13 Browser</title>
+    <link rel="icon" type="image/svg+xml" href="/newtab-icon.svg" />
     <style>
       :root {
         color-scheme: dark;
-        --bg: #06080d;
+        --bg-deep: #06080d;
         --surface: #111622;
-        --border: #2a3350;
+        --border: rgba(61, 74, 110, 0.55);
         --text: #eef2ff;
         --muted: #8892b0;
         --accent: #5b8def;
+        --accent-soft: rgba(91, 141, 239, 0.14);
         --privacy: #3ecf8e;
-        --private: #a78bfa;
-        --raised: 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.45);
-        --inset: inset 0 2px 8px rgba(0,0,0,0.5);
+        --privacy-soft: rgba(62, 207, 142, 0.12);
+        --ai: #c4a8ff;
+        --ai-soft: rgba(196, 168, 255, 0.14);
+        --danger: #ef6b6b;
       }
+
       * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body { min-height: 100%; }
+
       body {
-        min-height: 100vh;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        background:
-          radial-gradient(ellipse 70% 50% at 50% -5%, rgba(91,141,239,0.14), transparent),
-          radial-gradient(ellipse 50% 40% at 80% 90%, rgba(62,207,142,0.08), transparent),
-          var(--bg);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: #040508;
         color: var(--text);
+        line-height: 1.5;
+        overflow-x: hidden;
+      }
+
+      .page {
+        position: relative;
+        min-height: 100vh;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 2rem;
+        padding: 2.5rem 1.5rem 2rem;
+        isolation: isolate;
       }
-      .brand {
-        font-size: 3rem;
+
+      .ambient {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background:
+          linear-gradient(165deg, #0c1224 0%, #070a12 38%, #040508 100%);
+      }
+
+      .ambient-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(72px);
+        will-change: transform;
+      }
+
+      .ambient-glow-a {
+        width: min(68vmax, 920px);
+        height: min(52vmax, 680px);
+        top: -18%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: radial-gradient(circle, rgba(91, 141, 239, 0.34) 0%, rgba(91, 141, 239, 0.08) 42%, transparent 72%);
+        animation: glow-drift-a 22s ease-in-out infinite alternate;
+      }
+
+      .ambient-glow-b {
+        width: min(42vmax, 560px);
+        height: min(42vmax, 560px);
+        right: -8%;
+        bottom: -6%;
+        background: radial-gradient(circle, rgba(62, 207, 142, 0.22) 0%, rgba(62, 207, 142, 0.05) 45%, transparent 70%);
+        animation: glow-drift-b 26s ease-in-out infinite alternate;
+      }
+
+      .ambient-glow-c {
+        width: min(36vmax, 480px);
+        height: min(36vmax, 480px);
+        left: -6%;
+        bottom: 8%;
+        background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, rgba(167, 139, 250, 0.04) 48%, transparent 72%);
+        animation: glow-drift-c 24s ease-in-out infinite alternate;
+      }
+
+      .ambient-spotlight {
+        position: absolute;
+        top: 42%;
+        left: 50%;
+        width: min(820px, 92vw);
+        height: min(520px, 62vh);
+        transform: translate(-50%, -50%);
+        background: radial-gradient(ellipse 70% 58% at 50% 50%, rgba(255, 255, 255, 0.045) 0%, transparent 72%);
+      }
+
+      @keyframes glow-drift-a {
+        from { transform: translateX(-50%) translateY(0) scale(1); }
+        to { transform: translateX(-48%) translateY(3%) scale(1.06); }
+      }
+
+      @keyframes glow-drift-b {
+        from { transform: translate(0, 0) scale(1); }
+        to { transform: translate(-3%, -4%) scale(1.08); }
+      }
+
+      @keyframes glow-drift-c {
+        from { transform: translate(0, 0) scale(1); }
+        to { transform: translate(4%, -2%) scale(1.05); }
+      }
+
+      .grid-overlay {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.42;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+          radial-gradient(circle at center, rgba(91, 141, 239, 0.07) 0%, transparent 58%);
+        background-size: 40px 40px, 40px 40px, 100% 100%;
+        mask-image: radial-gradient(ellipse 75% 65% at 50% 42%, black 15%, transparent 78%);
+      }
+
+      .ambient-vignette {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(ellipse 85% 75% at 50% 44%, transparent 35%, rgba(2, 4, 8, 0.55) 100%),
+          linear-gradient(180deg, rgba(4, 6, 10, 0.15) 0%, transparent 18%, transparent 82%, rgba(2, 3, 6, 0.45) 100%);
+      }
+
+      .ambient-noise {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-size: 180px 180px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ambient-glow-a,
+        .ambient-glow-b,
+        .ambient-glow-c {
+          animation: none;
+        }
+      }
+
+      .shell {
+        position: relative;
+        z-index: 1;
+        width: min(720px, 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2rem;
+        animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .hero { text-align: center; }
+
+      .brand-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 1.35rem;
+      }
+
+      .brand-mark {
+        font-size: clamp(2rem, 6vw, 2.85rem);
         font-weight: 800;
         letter-spacing: -0.04em;
-        text-shadow: 0 2px 0 rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.5);
-        margin-bottom: 0.25rem;
+        line-height: 1;
+        color: var(--text);
+        text-shadow: 0 2px 16px rgba(91, 141, 239, 0.22);
       }
-      .brand .a { color: var(--accent); }
-      .badge {
+
+      .brand-mark .dot {
+        color: var(--accent);
+        text-shadow: 0 0 24px rgba(91, 141, 239, 0.45);
+      }
+
+      .brand-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 4px 12px;
-        border-radius: 20px;
-        border: 1px solid rgba(62,207,142,0.3);
-        background: rgba(62,207,142,0.08);
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(62, 207, 142, 0.35);
+        background: var(--privacy-soft);
         color: var(--privacy);
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-bottom: 2rem;
-        box-shadow: var(--raised);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
       }
-      .search-form { width: min(520px, 100%); }
-      .search-form input {
+
+      .brand-badge svg { width: 12px; height: 12px; fill: currentColor; }
+
+      .greeting {
+        font-size: clamp(1.85rem, 5vw, 2.65rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        margin-bottom: 0.35rem;
+      }
+
+      .date-line { font-size: 0.92rem; color: var(--muted); }
+
+      .search-form {
         width: 100%;
-        height: 50px;
-        padding: 0 1.25rem;
-        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .mode-toggle {
+        display: inline-flex;
+        align-self: center;
+        padding: 3px;
+        border-radius: 11px;
         border: 1px solid var(--border);
-        background: var(--surface);
-        box-shadow: var(--inset);
+        background: rgba(10, 14, 22, 0.65);
+      }
+
+      .mode-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+
+      .mode-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+      .mode-btn.active {
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .mode-btn[data-mode="search"].active { color: #c8d8ff; }
+      .mode-btn[data-mode="chat"].active { color: var(--ai); background: var(--ai-soft); }
+
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px 0 18px;
+        height: 56px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(28, 36, 56, 0.95) 0%, rgba(17, 22, 34, 0.98) 100%);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .search-box.chat-mode { border-color: rgba(196, 168, 255, 0.35); }
+
+      .search-box.chat-mode:focus-within {
+        border-color: rgba(196, 168, 255, 0.65);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(196, 168, 255, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .search-icon-chat { display: none; }
+      .search-box.chat-mode .search-icon-search { display: none; }
+      .search-box.chat-mode .search-icon-chat { display: block; }
+      .search-box.chat-mode .search-icon,
+      .search-box.chat-mode:focus-within .search-icon { color: var(--ai); }
+
+      .search-box:focus-within {
+        border-color: rgba(91, 141, 239, 0.65);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(91, 141, 239, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .search-icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        color: var(--muted);
+      }
+
+      .search-box:focus-within .search-icon-search { color: var(--accent); }
+
+      .search-box input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        background: transparent;
         color: var(--text);
-        font-size: 1rem;
+        font-size: 1.02rem;
         outline: none;
-        transition: box-shadow 0.2s, border-color 0.2s;
       }
-      .search-form input:focus {
-        border-color: var(--accent);
-        box-shadow: var(--inset), 0 0 0 3px rgba(91,141,239,0.2);
+
+      .search-box input::placeholder { color: #6b7594; }
+
+      .search-hint {
+        flex-shrink: 0;
+        padding: 4px 8px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: rgba(10, 14, 22, 0.75);
+        color: var(--muted);
+        font-size: 0.68rem;
+        font-family: inherit;
       }
-      .shortcuts {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-        gap: 0.75rem;
-        width: min(520px, 100%);
-        margin-top: 2rem;
-      }
-      .shortcut {
+
+      .shortcuts-panel {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.5rem;
-        padding: 1rem 0.75rem;
-        border-radius: 14px;
-        border: 1px solid var(--border);
-        background: linear-gradient(180deg, #171d2e, var(--surface));
-        box-shadow: var(--raised);
+        width: 100%;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+      }
+
+      .shortcut-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: center;
+        align-items: flex-start;
+        gap: 14px 18px;
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+        min-height: 120px;
+      }
+
+      .shortcut-tile {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 112px;
+        padding: 10px 8px 8px;
+        border-radius: 16px;
+        border: 1px solid transparent;
+        background: transparent;
         color: var(--text);
-        text-decoration: none;
-        font-size: 0.8rem;
         cursor: pointer;
-        transition: transform 0.15s, box-shadow 0.15s;
+        transition:
+          background 0.18s ease,
+          border-color 0.18s ease,
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
+        animation: tile-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: calc(var(--i, 0) * 35ms);
       }
-      .shortcut:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--raised), 0 0 20px rgba(91,141,239,0.15);
+
+      @keyframes tile-in {
+        from { opacity: 0; transform: translateY(10px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
       }
-      .shortcut-icon {
-        width: 36px; height: 36px;
-        border-radius: 10px;
-        background: rgba(91,141,239,0.15);
+
+      .shortcut-tile:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: transparent;
+        transform: translateY(-2px);
+        box-shadow: none;
+      }
+
+      .shortcut-tile:focus-visible {
+        outline: none;
+        border-color: rgba(91, 141, 239, 0.5);
+        box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.18);
+      }
+
+      .shortcut-tile:active {
+        transform: translateY(-1px);
+      }
+
+      .shortcut-tile.add-tile {
+        color: var(--muted);
+        border: none;
+        background: transparent;
+      }
+
+      .shortcut-tile.add-tile:hover {
+        color: var(--accent);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .shortcut-icon-wrap {
+        position: relative;
+        width: 68px;
+        height: 68px;
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 55%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow:
+          0 6px 16px rgba(0, 0, 0, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
         display: grid;
         place-items: center;
+        overflow: hidden;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      }
+
+      .shortcut-tile:hover .shortcut-icon-wrap {
+        border-color: rgba(91, 141, 239, 0.45);
+        box-shadow:
+          0 8px 22px rgba(0, 0, 0, 0.32),
+          0 0 24px rgba(91, 141, 239, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transform: scale(1.04);
+      }
+
+      .shortcut-tile.add-tile .shortcut-icon-wrap {
+        width: 68px;
+        height: 68px;
+        border-style: dashed;
+        border-color: rgba(91, 141, 239, 0.35);
+        background: rgba(91, 141, 239, 0.08);
+        box-shadow: none;
+        transform: none;
+      }
+
+      .shortcut-tile.add-tile:hover .shortcut-icon-wrap {
+        border-color: rgba(91, 141, 239, 0.65);
+        background: rgba(91, 141, 239, 0.16);
+        transform: scale(1.04);
+      }
+
+      .shortcut-icon-wrap img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+      }
+
+      .shortcut-fallback {
+        font-size: 1.35rem;
         font-weight: 700;
         color: var(--accent);
-        box-shadow: var(--inset);
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
       }
-      .hint {
-        margin-top: 2.5rem;
-        font-size: 0.75rem;
-        color: var(--muted);
+
+      .shortcut-icon-wrap.add-icon {
+        font-size: 2rem;
+        font-weight: 300;
+        line-height: 1;
+        color: var(--accent);
+      }
+
+      .shortcut-meta {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .shortcut-label {
+        width: 100%;
+        font-size: 0.82rem;
+        font-weight: 600;
         text-align: center;
+        line-height: 1.25;
+        color: #dce3f8;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0 2px;
       }
-      kbd {
-        padding: 0.15rem 0.4rem;
-        border-radius: 5px;
+
+      .shortcut-host {
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: #6b7594;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0 2px;
+      }
+
+      .shortcut-context-menu {
+        position: fixed;
+        z-index: 30;
+        min-width: 168px;
+        padding: 6px;
+        border-radius: 12px;
         border: 1px solid var(--border);
-        background: var(--surface);
-        box-shadow: var(--raised);
-        font-family: inherit;
-        font-size: 0.72rem;
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        display: none;
       }
+
+      .shortcut-context-menu.open {
+        display: block;
+      }
+
+      .shortcut-context-menu button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .shortcut-context-menu button:hover,
+      .shortcut-context-menu button:focus-visible {
+        outline: none;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .shortcut-context-menu button.danger {
+        color: #f0a0a0;
+      }
+
+      .shortcut-context-menu button.danger:hover,
+      .shortcut-context-menu button.danger:focus-visible {
+        background: rgba(239, 107, 107, 0.12);
+        color: var(--danger);
+      }
+
+      .shortcut-context-menu svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        opacity: 0.85;
+      }
+
+      .shortcut-context-menu .menu-sep {
+        height: 1px;
+        margin: 4px 6px;
+        background: rgba(61, 74, 110, 0.55);
+      }
+
+      .empty-state {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 0.5rem 0;
+        border: none;
+        background: none;
+        gap: 10px;
+      }
+
+      .empty-state-hint {
+        font-size: 0.74rem;
+        color: var(--muted);
+        max-width: 280px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 520px) {
+        .shortcut-grid {
+          gap: 12px 14px;
+          max-width: 100%;
+        }
+
+        .shortcut-tile {
+          width: 96px;
+        }
+
+        .shortcut-icon-wrap {
+          width: 58px;
+          height: 58px;
+          border-radius: 16px;
+        }
+
+        .shortcut-icon-wrap img {
+          width: 32px;
+          height: 32px;
+        }
+
+        .shortcut-tile.add-tile .shortcut-icon-wrap {
+          width: 58px;
+          height: 58px;
+        }
+      }
+
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: rgba(4, 6, 10, 0.72);
+        backdrop-filter: blur(4px);
+      }
+
+      .dialog-backdrop.open { display: flex; }
+
+      .dialog {
+        width: min(360px, 100%);
+        padding: 18px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      }
+
+      .dialog h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+
+      .dialog-preview {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(10, 14, 22, 0.55);
+      }
+
+      .dialog-preview-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .dialog-preview-icon img {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+      }
+
+      .dialog-preview-icon .shortcut-fallback {
+        font-size: 0.9rem;
+      }
+
+      .dialog-preview-host {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #c8d0ea;
+      }
+
+      .dialog-preview-url {
+        font-size: 0.68rem;
+        color: var(--muted);
+        margin-top: 2px;
+        word-break: break-all;
+      }
+
+      .field { margin-bottom: 12px; }
+
+      .field label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .field input {
+        width: 100%;
+        padding: 9px 11px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(10, 14, 22, 0.85);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.84rem;
+        outline: none;
+      }
+
+      .field input:focus {
+        border-color: rgba(91, 141, 239, 0.65);
+        box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.18);
+      }
+
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .dialog-btn {
+        padding: 7px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .dialog-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+      .dialog-btn.primary {
+        border-color: rgba(91, 141, 239, 0.55);
+        background: rgba(91, 141, 239, 0.2);
+      }
+
+      .dialog-btn.primary:hover { background: rgba(91, 141, 239, 0.32); }
     </style>
   </head>
   <body>
-    <h1 class="brand">13<span class="a">.13</span></h1>
-    <div class="badge">🛡 Privacy-first browsing</div>
+    <div class="page">
+      <div class="ambient" aria-hidden="true">
+        <div class="ambient-glow ambient-glow-a"></div>
+        <div class="ambient-glow ambient-glow-b"></div>
+        <div class="ambient-glow ambient-glow-c"></div>
+        <div class="ambient-spotlight"></div>
+      </div>
+      <div class="grid-overlay" aria-hidden="true"></div>
+      <div class="ambient-vignette" aria-hidden="true"></div>
+      <div class="ambient-noise" aria-hidden="true"></div>
 
-    <form class="search-form" id="search-form">
-      <input type="text" id="search-input" placeholder="Search DuckDuckGo or enter a URL" autofocus spellcheck="false" />
-    </form>
+      <main class="shell">
+        <header class="hero">
+          <div class="brand-row">
+            <div class="brand-mark">13<span class="dot">.13</span></div>
+            <div class="brand-badge">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5.5-3.5 9.5-8 10-4.5-.5-8-4.5-8-10V6l8-4z"/></svg>
+              Privacy-first
+            </div>
+          </div>
+          <h1 class="greeting" id="greeting">Good evening</h1>
+          <p class="date-line" id="date"></p>
+        </header>
 
-    <div class="shortcuts">
-      <a class="shortcut" href="https://duckduckgo.com" data-url="https://duckduckgo.com">
-        <div class="shortcut-icon">D</div>DuckDuckGo
-      </a>
-      <a class="shortcut" href="https://github.com" data-url="https://github.com">
-        <div class="shortcut-icon">G</div>GitHub
-      </a>
-      <a class="shortcut" href="https://proton.me" data-url="https://proton.me">
-        <div class="shortcut-icon">P</div>Proton
-      </a>
-      <a class="shortcut" href="https://developer.mozilla.org" data-url="https://developer.mozilla.org">
-        <div class="shortcut-icon">M</div>MDN
-      </a>
+        <form class="search-form" id="search-form">
+          <div class="mode-toggle" role="tablist" aria-label="Search mode">
+            <button type="button" class="mode-btn active" role="tab" aria-selected="true" data-mode="search">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Search
+            </button>
+            <button type="button" class="mode-btn" role="tab" aria-selected="false" data-mode="chat">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              AI Chat
+            </button>
+          </div>
+
+          <div class="search-box" id="search-box">
+            <svg class="search-icon search-icon-search" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="search-icon search-icon-chat" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search DuckDuckGo or enter a URL" autofocus spellcheck="false" autocomplete="off" />
+            <kbd class="search-hint" id="search-hint">Enter ↵</kbd>
+          </div>
+        </form>
+
+        <section class="shortcuts-panel" aria-label="Quick links">
+          <div class="shortcut-grid" id="shortcut-grid"></div>
+        </section>
+      </main>
     </div>
 
-    <p class="hint">
-      <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> private tab &nbsp;·&nbsp;
-      <kbd>Ctrl</kbd>+<kbd>T</kbd> new tab &nbsp;·&nbsp;
-      <kbd>Ctrl</kbd>+<kbd>L</kbd> address bar
-    </p>
+    <div class="dialog-backdrop" id="dialog-backdrop" aria-hidden="true">
+      <div class="dialog" role="dialog" aria-labelledby="dialog-title">
+        <h3 id="dialog-title">Add shortcut</h3>
+        <div class="dialog-preview" id="dialog-preview">
+          <div class="dialog-preview-icon" id="dialog-preview-icon">
+            <span class="shortcut-fallback">?</span>
+          </div>
+          <div>
+            <div class="dialog-preview-host" id="dialog-preview-host">Enter a URL</div>
+            <div class="dialog-preview-url" id="dialog-preview-url">Favicon loads from the site</div>
+          </div>
+        </div>
+        <form id="shortcut-form">
+          <div class="field">
+            <label for="shortcut-title">Name</label>
+            <input type="text" id="shortcut-title" placeholder="GitHub" required maxlength="48" />
+          </div>
+          <div class="field">
+            <label for="shortcut-url">URL</label>
+            <input type="text" id="shortcut-url" placeholder="https://github.com" required spellcheck="false" />
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="dialog-btn" id="dialog-cancel">Cancel</button>
+            <button type="submit" class="dialog-btn primary" id="dialog-save">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="shortcut-context-menu" id="shortcut-context-menu" role="menu" aria-hidden="true">
+      <button type="button" role="menuitem" id="context-edit">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0-4.24-4.24L4 15.76V20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+        Edit
+      </button>
+      <div class="menu-sep" aria-hidden="true"></div>
+      <button type="button" role="menuitem" id="context-delete" class="danger">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Remove
+      </button>
+    </div>
 
     <script>
+      const SHORTCUTS_KEY = 'newtab-shortcuts';
+      const MODE_KEY = 'newtab-mode';
+      const MAX_SHORTCUTS = 24;
+
       const form = document.getElementById('search-form');
       const input = document.getElementById('search-input');
-      function navigate(raw) {
+      const searchBox = document.getElementById('search-box');
+      const searchHint = document.getElementById('search-hint');
+      const greetingEl = document.getElementById('greeting');
+      const dateEl = document.getElementById('date');
+      const modeButtons = document.querySelectorAll('.mode-btn');
+      const shortcutGrid = document.getElementById('shortcut-grid');
+      const dialogBackdrop = document.getElementById('dialog-backdrop');
+      const shortcutForm = document.getElementById('shortcut-form');
+      const titleInput = document.getElementById('shortcut-title');
+      const urlInput = document.getElementById('shortcut-url');
+      const dialogTitle = document.getElementById('dialog-title');
+      const dialogCancel = document.getElementById('dialog-cancel');
+      const dialogPreviewIcon = document.getElementById('dialog-preview-icon');
+      const dialogPreviewHost = document.getElementById('dialog-preview-host');
+      const dialogPreviewUrl = document.getElementById('dialog-preview-url');
+      const contextMenu = document.getElementById('shortcut-context-menu');
+      const contextEditBtn = document.getElementById('context-edit');
+      const contextDeleteBtn = document.getElementById('context-delete');
+
+      let mode = sessionStorage.getItem(MODE_KEY) === 'chat' ? 'chat' : 'search';
+      let shortcuts = loadShortcuts();
+      let editingId = null;
+      let previewToken = 0;
+      let contextMenuTarget = null;
+
+      function loadShortcuts() {
+        try {
+          const raw = localStorage.getItem(SHORTCUTS_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(parsed)) return [];
+          return parsed.map((item) => ({
+            id: item.id || createId(),
+            title: String(item.title || ''),
+            url: String(item.url || ''),
+            favicon: item.favicon ? String(item.favicon) : undefined,
+          }));
+        } catch {
+          return [];
+        }
+      }
+
+      function saveShortcuts() {
+        localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(shortcuts));
+      }
+
+      function createId() {
+        return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+      }
+
+      function normalizeUrl(raw) {
+        const trimmed = raw.trim();
+        if (!trimmed) return null;
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        return 'https://' + trimmed;
+      }
+
+      function getDomain(url) {
+        try {
+          return new URL(url).hostname.replace(/^www\./, '');
+        } catch {
+          return null;
+        }
+      }
+
+      function faviconCandidates(url) {
+        try {
+          const parsed = new URL(url);
+          const host = parsed.hostname;
+          const origin = parsed.origin;
+          return [
+            `https://icons.duckduckgo.com/ip3/${host}.ico`,
+            `${origin}/favicon.ico`,
+            `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`,
+          ];
+        } catch {
+          return [];
+        }
+      }
+
+      function findStoredFaviconForDomain(domain) {
+        if (!domain) return null;
+        const match = shortcuts.find((item) => getDomain(item.url) === domain && item.favicon);
+        return match?.favicon ?? null;
+      }
+
+      function canLoadImage(src) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(img.naturalWidth > 0 && img.naturalHeight > 0);
+          img.onerror = () => resolve(false);
+          img.src = src;
+        });
+      }
+
+      async function resolveFavicon(url, existingFavicon) {
+        if (existingFavicon) return existingFavicon;
+
+        const domain = getDomain(url);
+        const reused = findStoredFaviconForDomain(domain);
+        if (reused && (await canLoadImage(reused))) return reused;
+
+        const candidates = faviconCandidates(url);
+        for (const candidate of candidates) {
+          if (await canLoadImage(candidate)) return candidate;
+        }
+        return candidates[0] || '';
+      }
+
+      function defaultTitle(url) {
+        const domain = getDomain(url);
+        return domain || 'Shortcut';
+      }
+
+      function fallbackLetter(title, url) {
+        const source = title || getDomain(url) || '?';
+        return source.charAt(0).toUpperCase();
+      }
+
+      function setIconContent(container, favicon, title, url) {
+        container.innerHTML = '';
+        if (favicon) {
+          const img = document.createElement('img');
+          img.src = favicon;
+          img.alt = '';
+          img.onerror = () => {
+            container.innerHTML = '';
+            const span = document.createElement('span');
+            span.className = 'shortcut-fallback';
+            span.textContent = fallbackLetter(title, url);
+            container.appendChild(span);
+          };
+          container.appendChild(img);
+          return;
+        }
+        const span = document.createElement('span');
+        span.className = 'shortcut-fallback';
+        span.textContent = fallbackLetter(title, url);
+        container.appendChild(span);
+      }
+
+      async function updateDialogPreview() {
+        const token = ++previewToken;
+        const url = normalizeUrl(urlInput.value);
+        if (!url) {
+          dialogPreviewHost.textContent = 'Enter a URL';
+          dialogPreviewUrl.textContent = 'Favicon loads from the site';
+          setIconContent(dialogPreviewIcon, '', '', '');
+          return;
+        }
+
+        const domain = getDomain(url);
+        dialogPreviewHost.textContent = titleInput.value.trim() || defaultTitle(url);
+        dialogPreviewUrl.textContent = domain || url;
+
+        const favicon = await resolveFavicon(url);
+        if (token !== previewToken) return;
+        setIconContent(dialogPreviewIcon, favicon, titleInput.value, url);
+
+        if (!titleInput.value.trim() && domain && !editingId) {
+          titleInput.placeholder = defaultTitle(url);
+        }
+      }
+
+      function isLocalFilePath(raw) {
+        const trimmed = raw.trim().replace(/^["']|["']$/g, '');
+        if (!trimmed) return false;
+        if (/^file:\/\//i.test(trimmed)) return true;
+        if (/^[a-zA-Z]:[\\/]/.test(trimmed)) return true;
+        if (/^\\\\/.test(trimmed)) return true;
+        if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return true;
+        if ((trimmed.startsWith('~') || trimmed.startsWith('.')) && /[\\/]/.test(trimmed)) return true;
+        return false;
+      }
+
+      function localFilePathToUrl(raw) {
+        const trimmed = raw.trim().replace(/^["']|["']$/g, '');
+        if (/^file:\/\//i.test(trimmed)) return trimmed;
+        const normalized = trimmed.replace(/\\/g, '/');
+        if (/^[a-zA-Z]:\//.test(normalized)) {
+          return 'file:///' + encodeURI(normalized);
+        }
+        if (normalized.startsWith('/')) {
+          return 'file://' + encodeURI(normalized);
+        }
+        return 'file:///' + encodeURI(normalized);
+      }
+
+      function resolveNavigationUrl(raw) {
+        const trimmed = raw.trim();
+        if (!trimmed) return null;
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        if (isLocalFilePath(trimmed)) return localFilePathToUrl(trimmed);
+        if (trimmed.includes('.') && !trimmed.includes(' ') && !trimmed.includes('/') && !trimmed.includes('\\')) {
+          return 'https://' + trimmed;
+        }
+        return null;
+      }
+
+      function isLikelyUrl(raw) {
+        if (/^https?:\/\//i.test(raw)) return true;
+        if (isLocalFilePath(raw)) return true;
+        return raw.includes('.') && !raw.includes(' ');
+      }
+
+      function navigateSearch(raw) {
         const trimmed = raw.trim();
         if (!trimmed) return;
-        let url;
-        if (/^https?:\/\//i.test(trimmed)) url = trimmed;
-        else if (trimmed.includes('.') && !trimmed.includes(' ')) url = 'https://' + trimmed;
-        else url = 'https://duckduckgo.com/?q=' + encodeURIComponent(trimmed);
-        window.location.href = url;
+        const resolved = resolveNavigationUrl(trimmed);
+        window.location.href =
+          resolved ?? 'https://duckduckgo.com/?q=' + encodeURIComponent(trimmed);
       }
-      form.addEventListener('submit', (e) => { e.preventDefault(); navigate(input.value); });
-      document.querySelectorAll('.shortcut').forEach((el) => {
-        el.addEventListener('click', (e) => { e.preventDefault(); navigate(el.dataset.url); });
+
+      function navigateChat(raw) {
+        const trimmed = raw.trim();
+        if (!trimmed) {
+          window.location.href = 'https://duck.ai/';
+          return;
+        }
+        const resolved = resolveNavigationUrl(trimmed);
+        if (resolved) {
+          window.location.href = resolved;
+          return;
+        }
+        window.location.href = 'https://duckduckgo.com/?q=' + encodeURIComponent('!chat ' + trimmed);
+      }
+
+      function navigate(raw) {
+        if (mode === 'chat') navigateChat(raw);
+        else navigateSearch(raw);
+      }
+
+      function applyMode(nextMode) {
+        mode = nextMode;
+        sessionStorage.setItem(MODE_KEY, mode);
+        modeButtons.forEach((btn) => {
+          const active = btn.dataset.mode === mode;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        searchBox.classList.toggle('chat-mode', mode === 'chat');
+        input.placeholder = mode === 'chat' ? 'Ask Duck.ai anything…' : 'Search DuckDuckGo or enter a URL';
+        searchHint.textContent = mode === 'chat' ? 'Ask ↵' : 'Enter ↵';
+      }
+
+      modeButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          applyMode(btn.dataset.mode);
+          input.focus();
+        });
       });
+
+      function closeContextMenu() {
+        contextMenu.classList.remove('open');
+        contextMenu.setAttribute('aria-hidden', 'true');
+        contextMenuTarget = null;
+      }
+
+      function openContextMenu(clientX, clientY, item) {
+        contextMenuTarget = item;
+        contextMenu.classList.add('open');
+        contextMenu.setAttribute('aria-hidden', 'false');
+
+        contextMenu.style.visibility = 'hidden';
+        contextMenu.style.left = '0px';
+        contextMenu.style.top = '0px';
+
+        const pad = 8;
+        const menuW = contextMenu.offsetWidth;
+        const menuH = contextMenu.offsetHeight;
+        let x = clientX;
+        let y = clientY;
+        if (x + menuW > window.innerWidth - pad) x = window.innerWidth - menuW - pad;
+        if (y + menuH > window.innerHeight - pad) y = window.innerHeight - menuH - pad;
+        if (x < pad) x = pad;
+        if (y < pad) y = pad;
+
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        contextMenu.style.visibility = '';
+        contextEditBtn.focus();
+      }
+
+      function removeShortcut(id) {
+        shortcuts = shortcuts.filter((s) => s.id !== id);
+        saveShortcuts();
+        renderShortcuts();
+      }
+
+      contextEditBtn.addEventListener('click', () => {
+        if (!contextMenuTarget) return;
+        const item = contextMenuTarget;
+        closeContextMenu();
+        openDialog(item);
+      });
+
+      contextDeleteBtn.addEventListener('click', () => {
+        if (!contextMenuTarget) return;
+        removeShortcut(contextMenuTarget.id);
+        closeContextMenu();
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!contextMenu.classList.contains('open')) return;
+        if (contextMenu.contains(e.target)) return;
+        closeContextMenu();
+      });
+
+      document.addEventListener('contextmenu', (e) => {
+        if (!contextMenu.classList.contains('open')) return;
+        if (contextMenu.contains(e.target)) return;
+        closeContextMenu();
+      });
+
+      window.addEventListener('resize', closeContextMenu);
+      window.addEventListener('scroll', closeContextMenu, true);
+
+      function openDialog(existing) {
+        closeContextMenu();
+        editingId = existing ? existing.id : null;
+        dialogTitle.textContent = existing ? 'Edit shortcut' : 'Add shortcut';
+        titleInput.value = existing ? existing.title : '';
+        titleInput.placeholder = 'Site name';
+        urlInput.value = existing ? existing.url : '';
+        dialogBackdrop.classList.add('open');
+        dialogBackdrop.setAttribute('aria-hidden', 'false');
+        void updateDialogPreview();
+        urlInput.focus();
+      }
+
+      function closeDialog() {
+        editingId = null;
+        shortcutForm.reset();
+        dialogBackdrop.classList.remove('open');
+        dialogBackdrop.setAttribute('aria-hidden', 'true');
+      }
+
+      function createAddTile(options) {
+        const isFirst = options?.isFirst ?? false;
+        const addTile = document.createElement('button');
+        addTile.type = 'button';
+        addTile.className = 'shortcut-tile add-tile';
+        addTile.style.setProperty('--i', String(options?.index ?? 0));
+        addTile.setAttribute('aria-label', isFirst ? 'Add your first quick link' : 'Add quick link');
+        addTile.innerHTML =
+          '<div class="shortcut-icon-wrap add-icon">+</div>' +
+          '<div class="shortcut-meta">' +
+          `<span class="shortcut-label">${isFirst ? 'Add your first link' : 'Add link'}</span>` +
+          `<span class="shortcut-host">${isFirst ? 'Click to pin a site' : 'New shortcut'}</span>` +
+          '</div>';
+        addTile.addEventListener('click', () => openDialog(null));
+        return addTile;
+      }
+
+      function renderShortcuts() {
+        shortcutGrid.innerHTML = '';
+        const count = shortcuts.length;
+
+        if (count === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.appendChild(createAddTile({ isFirst: true, index: 0 }));
+          const hint = document.createElement('p');
+          hint.className = 'empty-state-hint';
+          hint.textContent = 'Icons load automatically from each site you add.';
+          empty.appendChild(hint);
+          shortcutGrid.appendChild(empty);
+        }
+
+        shortcuts.forEach((item, index) => {
+          const tile = document.createElement('div');
+          tile.className = 'shortcut-tile';
+          tile.style.setProperty('--i', String(index));
+          tile.title = item.url;
+          tile.setAttribute('role', 'button');
+          tile.tabIndex = 0;
+
+          const iconWrap = document.createElement('div');
+          iconWrap.className = 'shortcut-icon-wrap';
+          setIconContent(iconWrap, item.favicon, item.title, item.url);
+
+          if (!item.favicon) {
+            void resolveFavicon(item.url).then((favicon) => {
+              if (!favicon) return;
+              item.favicon = favicon;
+              saveShortcuts();
+              setIconContent(iconWrap, favicon, item.title, item.url);
+            });
+          }
+
+          const meta = document.createElement('div');
+          meta.className = 'shortcut-meta';
+
+          const label = document.createElement('span');
+          label.className = 'shortcut-label';
+          label.textContent = item.title;
+
+          const host = document.createElement('span');
+          host.className = 'shortcut-host';
+          host.textContent = getDomain(item.url) || item.url;
+
+          meta.appendChild(label);
+          meta.appendChild(host);
+
+          tile.appendChild(iconWrap);
+          tile.appendChild(meta);
+
+          tile.addEventListener('click', () => {
+            window.location.href = item.url;
+          });
+          tile.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openContextMenu(e.clientX, e.clientY, item);
+          });
+          tile.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              window.location.href = item.url;
+            }
+          });
+
+          shortcutGrid.appendChild(tile);
+        });
+
+        if (shortcuts.length < MAX_SHORTCUTS && shortcuts.length > 0) {
+          shortcutGrid.appendChild(createAddTile({ index: shortcuts.length }));
+        }
+      }
+
+      shortcutForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = normalizeUrl(urlInput.value);
+        if (!url) {
+          urlInput.focus();
+          return;
+        }
+        const title = titleInput.value.trim() || defaultTitle(url);
+        const saveBtn = document.getElementById('dialog-save');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+
+        const existing = editingId ? shortcuts.find((s) => s.id === editingId) : null;
+        const existingFavicon =
+          existing && getDomain(existing.url) === getDomain(url) ? existing.favicon : null;
+
+        void resolveFavicon(url, existingFavicon)
+          .then((favicon) => {
+            const entry = { id: editingId || createId(), title, url, favicon: favicon || undefined };
+            if (editingId) {
+              shortcuts = shortcuts.map((s) => (s.id === editingId ? entry : s));
+            } else {
+              shortcuts.push(entry);
+            }
+            saveShortcuts();
+            renderShortcuts();
+            closeDialog();
+          })
+          .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+          });
+      });
+
+      urlInput.addEventListener('input', () => {
+        void updateDialogPreview();
+      });
+
+      titleInput.addEventListener('input', () => {
+        const url = normalizeUrl(urlInput.value);
+        dialogPreviewHost.textContent = titleInput.value.trim() || (url ? defaultTitle(url) : 'Enter a URL');
+      });
+
+      dialogCancel.addEventListener('click', closeDialog);
+      dialogBackdrop.addEventListener('click', (e) => {
+        if (e.target === dialogBackdrop) closeDialog();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (contextMenu.classList.contains('open')) {
+            closeContextMenu();
+            return;
+          }
+          if (dialogBackdrop.classList.contains('open')) {
+            closeDialog();
+          }
+        }
+      });
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        navigate(input.value);
+      });
+
+      function setGreeting() {
+        const hour = new Date().getHours();
+        let greeting = 'Good evening';
+        if (hour < 12) greeting = 'Good morning';
+        else if (hour < 17) greeting = 'Good afternoon';
+        greetingEl.textContent = greeting;
+      }
+
+      function setDate() {
+        dateEl.textContent = new Date().toLocaleDateString(undefined, {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+        });
+      }
+
+      applyMode(mode);
+      renderShortcuts();
+
+      void Promise.all(
+        shortcuts.map(async (item) => {
+          if (item.favicon) return;
+          const favicon = await resolveFavicon(item.url);
+          if (favicon) item.favicon = favicon;
+        }),
+      ).then(() => {
+        if (shortcuts.some((item) => item.favicon)) {
+          saveShortcuts();
+          renderShortcuts();
+        }
+      });
+
+      setGreeting();
+      setDate();
     </script>
   </body>
 </html>

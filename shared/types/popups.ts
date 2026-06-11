@@ -5,9 +5,42 @@ export interface ChromePopupAnchor {
   height?: number;
 }
 
+export type ChromeMenuIcon =
+  | 'private'
+  | 'search'
+  | 'shield'
+  | 'devtools'
+  | 'tab'
+  | 'duplicate'
+  | 'restore'
+  | 'reload'
+  | 'zoom'
+  | 'trash'
+  | 'info'
+  | 'tray';
+
 export interface ChromeMenuItemPayload {
-  id: string;
+  type: 'item' | 'separator' | 'header';
+  id?: string;
   label: string;
   shortcut?: string;
-  icon?: 'private' | 'search' | 'shield' | 'devtools';
+  icon?: ChromeMenuIcon;
+}
+
+export interface BookmarkMenuItemPayload {
+  type: 'item' | 'separator' | 'header';
+  id?: string;
+  label: string;
+  danger?: boolean;
+  indent?: number;
+  favicon?: string;
+  promptDefault?: string;
+}
+
+export interface AboutInfo {
+  name: string;
+  version: string;
+  tagline: string;
+  repository: string;
+  license: string;
 }

@@ -10,9 +10,9 @@ import {
 } from '../services/permissions/site-permissions';
 import {
   computePopupBounds,
+  loadStaticPage,
   POPUP_WEB_PREFERENCES,
   preloadPath,
-  staticRoot,
 } from './popup-utils';
 
 export type { ChromePopupAnchor };
@@ -138,7 +138,7 @@ export function showSitePermissionsPanel(
     sendPanelSnapshot();
   });
 
-  void siteWindow.loadFile(`${staticRoot(isDev)}/site-permissions.html`);
+  loadStaticPage(siteWindow.webContents, isDev, 'site-permissions.html');
   siteWindow.show();
   siteWindow.focus();
 }

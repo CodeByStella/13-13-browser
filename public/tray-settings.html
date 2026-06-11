@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tray & Hotkeys</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --bg: #0a0e16;
+        --surface: #111622;
+        --surface-raised: #171d2e;
+        --border: #2a3350;
+        --text: #eef2ff;
+        --text-muted: #8892b0;
+        --accent: #5b8def;
+        --accent-glow: rgba(91, 141, 239, 0.35);
+        --success: #3ecf8e;
+        --danger: #ef6b6b;
+        --inset: inset 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        --raised: 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 10px rgba(0, 0, 0, 0.35);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      .panel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(61, 74, 110, 0.55);
+        background: linear-gradient(180deg, #1c2438 0%, var(--surface) 100%);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-title h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .panel-title p {
+        margin: 2px 0 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .panel-close {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text-muted);
+        cursor: pointer;
+        box-shadow: var(--raised);
+      }
+
+      .panel-close svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.5;
+      }
+
+      .panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 14px 14px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .section-label {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 11px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+        box-shadow: var(--raised);
+        cursor: pointer;
+      }
+
+      .toggle-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); }
+      .toggle-desc { display: block; font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+
+      .toggle-row input[type='checkbox'] {
+        width: 38px;
+        height: 22px;
+        appearance: none;
+        border-radius: 11px;
+        background: var(--bg);
+        box-shadow: var(--inset);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        position: relative;
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+
+      .toggle-row input[type='checkbox']::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        box-shadow: var(--raised);
+        transition: transform 0.2s, background 0.2s;
+      }
+
+      .toggle-row input[type='checkbox']:checked {
+        background: rgba(91, 141, 239, 0.22);
+        border-color: rgba(91, 141, 239, 0.45);
+      }
+
+      .toggle-row input[type='checkbox']:checked::after {
+        transform: translateX(16px);
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+
+      .hotkey-card {
+        padding: 10px;
+        border-radius: 11px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        box-shadow: var(--inset);
+      }
+
+      .hotkey-card label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+
+      .hotkey-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .hotkey-input {
+        flex: 1;
+        padding: 8px 10px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.8rem;
+        box-shadow: var(--inset);
+        cursor: pointer;
+      }
+
+      .hotkey-input:focus {
+        outline: 2px solid rgba(91, 141, 239, 0.45);
+        outline-offset: 1px;
+      }
+
+      .hotkey-input.recording {
+        border-color: rgba(91, 141, 239, 0.55);
+        color: var(--accent);
+      }
+
+      .hotkey-btn {
+        padding: 8px 10px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: var(--surface-raised);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: var(--raised);
+      }
+
+      .hotkey-btn:hover { background: rgba(255, 255, 255, 0.06); }
+
+      .hotkey-hint {
+        margin-top: 8px;
+        font-size: 0.66rem;
+        color: var(--text-muted);
+        line-height: 1.45;
+      }
+
+      .hotkey-status {
+        margin-top: 6px;
+        font-size: 0.68rem;
+        font-weight: 600;
+      }
+
+      .hotkey-status.ok { color: var(--success); }
+      .hotkey-status.error { color: var(--danger); }
+
+      .action-btn {
+        margin-top: 4px;
+        padding: 10px;
+        border-radius: 11px;
+        border: 1px solid rgba(91, 141, 239, 0.4);
+        background: linear-gradient(180deg, rgba(91, 141, 239, 0.18), rgba(91, 141, 239, 0.06));
+        color: #c8d8ff;
+        font-weight: 600;
+        font-size: 0.82rem;
+        cursor: pointer;
+        box-shadow: var(--raised);
+        font-family: inherit;
+      }
+
+      .action-btn:hover {
+        background: linear-gradient(180deg, rgba(91, 141, 239, 0.28), rgba(91, 141, 239, 0.1));
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="panel" role="dialog" aria-label="Tray and hotkey settings">
+      <div class="panel-header">
+        <div class="panel-title">
+          <h2>Tray & Hotkeys</h2>
+          <p>Run in the background</p>
+        </div>
+        <button type="button" class="panel-close" id="close-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="panel-body" id="body"></div>
+    </aside>
+    <script>
+      const MODIFIER_KEYS = new Set(['Control', 'Shift', 'Alt', 'Meta']);
+
+      let state = {
+        settings: {
+          minimizeToTray: false,
+          closeToTray: true,
+          showHideHotkey: 'CommandOrControl+Shift+H',
+          hotkeyEnabled: true,
+        },
+        hotkeyRegistered: true,
+      };
+
+      let recording = false;
+
+      function formatHotkey(accelerator) {
+        if (!accelerator) return 'None';
+        const isMac = navigator.platform.includes('Mac');
+        return accelerator.split('+').map((part) => {
+          if (part === 'CommandOrControl') return isMac ? '⌘' : 'Ctrl';
+          if (part === 'Command') return '⌘';
+          if (part === 'Control') return 'Ctrl';
+          if (part === 'Alt') return isMac ? '⌥' : 'Alt';
+          if (part === 'Shift') return 'Shift';
+          if (part === 'Plus') return '+';
+          return part.length === 1 ? part.toUpperCase() : part;
+        }).join(isMac ? '' : '+');
+      }
+
+      function keyEventToAccelerator(event) {
+        if (MODIFIER_KEYS.has(event.key)) return null;
+
+        const parts = [];
+        if (event.ctrlKey || event.metaKey) parts.push('CommandOrControl');
+        if (event.altKey) parts.push('Alt');
+        if (event.shiftKey) parts.push('Shift');
+
+        let key = event.key;
+        if (key === ' ') key = 'Space';
+        else if (key.startsWith('Arrow')) key = key.replace('Arrow', '');
+        else if (key.length === 1) key = key.toUpperCase();
+
+        parts.push(key);
+        return parts.join('+');
+      }
+
+      async function updateSetting(partial) {
+        const next = await window.traySettingsApi.update(partial);
+        state = next;
+        render();
+      }
+
+      function render() {
+        const body = document.getElementById('body');
+        const hotkeyLabel = formatHotkey(state.settings.showHideHotkey);
+        const statusClass = state.settings.hotkeyEnabled
+          ? (state.hotkeyRegistered ? 'ok' : 'error')
+          : 'ok';
+        const statusText = !state.settings.hotkeyEnabled
+          ? 'Hotkey disabled'
+          : state.hotkeyRegistered
+            ? 'Hotkey active globally'
+            : 'Hotkey could not be registered (may be in use)';
+
+        body.innerHTML = `
+          <div class="section-label">Tray behavior</div>
+          <label class="toggle-row">
+            <div>
+              <span class="toggle-label">Close to tray</span>
+              <span class="toggle-desc">Keep running when you click the close button</span>
+            </div>
+            <input type="checkbox" data-key="closeToTray" ${state.settings.closeToTray ? 'checked' : ''} />
+          </label>
+          <label class="toggle-row">
+            <div>
+              <span class="toggle-label">Minimize to tray</span>
+              <span class="toggle-desc">Minimize button hides the window to the tray</span>
+            </div>
+            <input type="checkbox" data-key="minimizeToTray" ${state.settings.minimizeToTray ? 'checked' : ''} />
+          </label>
+
+          <div class="section-label">Show / hide hotkey</div>
+          <label class="toggle-row">
+            <div>
+              <span class="toggle-label">Enable hotkey</span>
+              <span class="toggle-desc">Toggle browser visibility from anywhere</span>
+            </div>
+            <input type="checkbox" data-key="hotkeyEnabled" ${state.settings.hotkeyEnabled ? 'checked' : ''} />
+          </label>
+
+          <div class="hotkey-card">
+            <label for="hotkey-input">Shortcut</label>
+            <div class="hotkey-row">
+              <input
+                id="hotkey-input"
+                class="hotkey-input"
+                type="text"
+                readonly
+                value="${hotkeyLabel}"
+                placeholder="Click Record, then press keys"
+                ${state.settings.hotkeyEnabled ? '' : 'disabled'}
+              />
+              <button type="button" class="hotkey-btn" id="record-btn" ${state.settings.hotkeyEnabled ? '' : 'disabled'}>Record</button>
+              <button type="button" class="hotkey-btn" id="reset-btn" ${state.settings.hotkeyEnabled ? '' : 'disabled'}>Reset</button>
+            </div>
+            <p class="hotkey-hint">Press Record, then a combo like Ctrl+Shift+H. Escape cancels.</p>
+            <p class="hotkey-status ${statusClass}" id="hotkey-status">${statusText}</p>
+          </div>
+
+          <button type="button" class="action-btn" id="hide-now-btn">Hide to tray now</button>
+        `;
+
+        body.querySelectorAll('input[data-key]').forEach((input) => {
+          input.addEventListener('change', async (event) => {
+            const key = event.target.getAttribute('data-key');
+            await updateSetting({ [key]: event.target.checked });
+          });
+        });
+
+        document.getElementById('hide-now-btn').addEventListener('click', () => {
+          window.traySettingsApi.hideNow();
+          window.traySettingsApi.close();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', async () => {
+          await updateSetting({ showHideHotkey: 'CommandOrControl+Shift+H' });
+        });
+
+        const hotkeyInput = document.getElementById('hotkey-input');
+        const recordBtn = document.getElementById('record-btn');
+
+        recordBtn.addEventListener('click', () => {
+          if (!state.settings.hotkeyEnabled) return;
+          recording = true;
+          hotkeyInput.classList.add('recording');
+          hotkeyInput.value = 'Press shortcut…';
+          recordBtn.textContent = 'Listening';
+        });
+
+        hotkeyInput.addEventListener('keydown', async (event) => {
+          if (!recording) return;
+          event.preventDefault();
+
+          if (event.key === 'Escape') {
+            recording = false;
+            hotkeyInput.classList.remove('recording');
+            recordBtn.textContent = 'Record';
+            render();
+            return;
+          }
+
+          const accelerator = keyEventToAccelerator(event);
+          if (!accelerator) return;
+
+          recording = false;
+          hotkeyInput.classList.remove('recording');
+          recordBtn.textContent = 'Record';
+          await updateSetting({ showHideHotkey: accelerator });
+        });
+      }
+
+      document.getElementById('close-btn').addEventListener('click', () => {
+        window.traySettingsApi.close();
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !recording) {
+          window.traySettingsApi.close();
+        }
+      });
+
+      window.traySettingsApi.onData((data) => {
+        state = data;
+        render();
+      });
+    </script>
+  </body>
+</html>

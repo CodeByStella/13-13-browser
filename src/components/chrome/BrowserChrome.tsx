@@ -22,9 +22,12 @@ interface BrowserChromeProps {
   zoomLevel: number;
   bookmarks: Bookmark[];
   isBookmarked: boolean;
+  renameTarget: { id: string; title: string } | null;
+  onRenameTargetHandled: () => void;
   findOpen: boolean;
   findQuery: string;
   findResult: { activeMatch: number; matches: number };
+  findInputRef: React.RefObject<HTMLInputElement | null>;
   addressRef: React.RefObject<HTMLInputElement | null>;
   onAddressChange: (value: string) => void;
   onAddressFocus: () => void;
@@ -44,7 +47,11 @@ interface BrowserChromeProps {
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onBookmarkNavigate: (url: string) => void;
+  onBookmarkOpenInNewTab: (url: string) => void;
   onRemoveBookmark: (id: string) => void;
+  onCreateBookmarkFolder: (title: string, parentId?: string | null) => void;
+  onRenameBookmark: (id: string, title: string) => void;
+  onMoveBookmark: (id: string, parentId: string | null) => void;
   onFindQueryChange: (value: string) => void;
   onFindNext: () => void;
   onFindPrev: () => void;
@@ -70,9 +77,12 @@ export function BrowserChrome(props: BrowserChromeProps) {
     zoomLevel,
     bookmarks,
     isBookmarked,
+    renameTarget,
+    onRenameTargetHandled,
     findOpen,
     findQuery,
     findResult,
+    findInputRef,
     addressRef,
     onAddressChange,
     onAddressFocus,
@@ -92,7 +102,11 @@ export function BrowserChrome(props: BrowserChromeProps) {
     onSwitchTab,
     onCloseTab,
     onBookmarkNavigate,
+    onBookmarkOpenInNewTab,
     onRemoveBookmark,
+    onCreateBookmarkFolder,
+    onRenameBookmark,
+    onMoveBookmark,
     onFindQueryChange,
     onFindNext,
     onFindPrev,
@@ -160,14 +174,18 @@ export function BrowserChrome(props: BrowserChromeProps) {
 
       <BookmarkBar
         bookmarks={bookmarks}
+        activeUrl={activeTab?.url ?? ''}
+        renameTarget={renameTarget}
+        onRenameTargetHandled={onRenameTargetHandled}
         onNavigate={onBookmarkNavigate}
-        onRemove={onRemoveBookmark}
+        onOpenInNewTab={onBookmarkOpenInNewTab}
       />
 
       {findOpen && (
         <FindBar
           query={findQuery}
           result={findResult}
+          inputRef={findInputRef}
           onQueryChange={onFindQueryChange}
           onNext={onFindNext}
           onPrev={onFindPrev}

@@ -14,6 +14,7 @@ import {
   isSensitivePermission,
   resolveSitePermission,
 } from '../permissions/site-permissions';
+import { initContentProtectionFromSettings, setContentProtectionPreference } from './content-protection';
 
 const TRACKER_DOMAINS = [
   'google-analytics.com',
@@ -58,6 +59,7 @@ export function registerPrivacyStateTarget(webContents: WebContents): () => void
 export function initPrivacy(window: BrowserWindow): void {
   mainWindow = window;
   settings = loadPrivacySettings();
+  initContentProtectionFromSettings();
   bindPrivacySettingsProvider(() => settings);
   setupSession(session.defaultSession);
 }
@@ -77,13 +79,22 @@ export function getPrivacyStats(): PrivacyStats {
 export function updatePrivacySettings(partial: Partial<PrivacySettings>): PrivacySettings {
   settings = { ...settings, ...partial };
   savePrivacySettings(settings);
+  if (typeof partial.screenCaptureProtection === 'boolean') {
+    setContentProtectionPreference(partial.screenCaptureProtection, { persist: false });
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setContentProtection(partial.screenCaptureProtection);
+    }
+  }
   broadcastPrivacyState();
   return { ...settings };
 }
 
+function browserSessions(): Session[] {
+  return [session.defaultSession, session.fromPartition('persist:browser')];
+}
+
 export async function clearBrowsingData(): Promise<void> {
-  const sessions = [session.defaultSession];
-  for (const sess of sessions) {
+  for (const sess of browserSessions()) {
     await sess.clearStorageData();
     await sess.clearCache();
   }

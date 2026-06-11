@@ -1,6 +1,7 @@
 interface FindBarProps {
   query: string;
   result: { activeMatch: number; matches: number };
+  inputRef: React.RefObject<HTMLInputElement | null>;
   onQueryChange: (value: string) => void;
   onNext: () => void;
   onPrev: () => void;
@@ -10,6 +11,7 @@ interface FindBarProps {
 export function FindBar({
   query,
   result,
+  inputRef,
   onQueryChange,
   onNext,
   onPrev,
@@ -25,6 +27,7 @@ export function FindBar({
   return (
     <div className="find-bar">
       <input
+        ref={inputRef}
         type="text"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
@@ -36,7 +39,6 @@ export function FindBar({
         }}
         placeholder="Find in page"
         spellCheck={false}
-        autoFocus
         aria-label="Find in page"
       />
       <span className="find-count">{label}</span>

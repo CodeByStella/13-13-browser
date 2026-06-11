@@ -4,96 +4,719 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Page Not Available — 13.13 Browser</title>
+    <link rel="icon" type="image/svg+xml" href="/error-icon.svg" />
     <style>
       :root {
         color-scheme: dark;
-        --bg: #0a0c10;
-        --surface: #12151c;
-        --border: #252b38;
-        --text: #eef1f7;
-        --muted: #8b95a8;
-        --accent: #6b93f0;
+        --text: #eef2ff;
+        --muted: #8892b0;
+        --accent: #5b8def;
         --danger: #ef6b6b;
+        --danger-soft: rgba(239, 107, 107, 0.14);
+        --border: rgba(61, 74, 110, 0.55);
+        --surface: rgba(18, 24, 38, 0.82);
       }
+
       * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body { min-height: 100%; }
+
       body {
-        min-height: 100vh;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        background: var(--bg);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: #040508;
         color: var(--text);
+        line-height: 1.5;
+        overflow-x: hidden;
+      }
+
+      .page {
+        position: relative;
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem;
+        padding: 2rem 1.25rem;
+        isolation: isolate;
       }
-      .card {
-        max-width: 480px;
-        text-align: center;
+
+      .ambient {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: linear-gradient(165deg, #120c14 0%, #0a0e18 42%, #040508 100%);
       }
+
+      .ambient-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        will-change: transform;
+      }
+
+      .ambient-glow-a {
+        width: min(62vmax, 860px);
+        height: min(50vmax, 640px);
+        top: -22%;
+        left: 18%;
+        background: radial-gradient(circle, rgba(239, 107, 107, 0.28) 0%, transparent 68%);
+        animation: drift-a 24s ease-in-out infinite alternate;
+      }
+
+      .ambient-glow-b {
+        width: min(44vmax, 560px);
+        height: min(44vmax, 560px);
+        right: -6%;
+        bottom: -10%;
+        background: radial-gradient(circle, rgba(91, 141, 239, 0.2) 0%, transparent 70%);
+        animation: drift-b 28s ease-in-out infinite alternate;
+      }
+
+      .ambient-glow-c {
+        width: min(32vmax, 420px);
+        height: min(32vmax, 420px);
+        left: -4%;
+        bottom: 12%;
+        background: radial-gradient(circle, rgba(239, 107, 107, 0.12) 0%, transparent 72%);
+        animation: drift-c 20s ease-in-out infinite alternate;
+      }
+
+      @keyframes drift-a {
+        from { transform: translate(0, 0) scale(1); }
+        to { transform: translate(4%, 5%) scale(1.07); }
+      }
+
+      @keyframes drift-b {
+        from { transform: translate(0, 0) scale(1); }
+        to { transform: translate(-5%, -3%) scale(1.05); }
+      }
+
+      @keyframes drift-c {
+        from { transform: translate(0, 0); }
+        to { transform: translate(6%, -4%); }
+      }
+
+      .grid-overlay {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.32;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 12%, transparent 78%);
+      }
+
+      .ambient-vignette {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: radial-gradient(ellipse 88% 78% at 50% 44%, transparent 32%, rgba(2, 4, 8, 0.62) 100%);
+      }
+
+      .ambient-noise {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      .shell {
+        position: relative;
+        z-index: 1;
+        width: min(920px, 100%);
+        animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        align-items: stretch;
+      }
+
+      @media (max-width: 760px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      .panel {
+        border-radius: 20px;
+        border: 1px solid rgba(61, 74, 110, 0.48);
+        background: linear-gradient(180deg, rgba(30, 38, 58, 0.78) 0%, rgba(12, 16, 26, 0.92) 100%);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .error-panel {
+        padding: 1.75rem 1.65rem 1.65rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+      }
+
+      .panel-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        color: var(--muted);
+      }
+
+      .brand-mark .dot { color: var(--accent); }
+
+      .error-code {
+        padding: 4px 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(239, 107, 107, 0.38);
+        background: rgba(239, 107, 107, 0.12);
+        color: #f0a0a0;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .error-code.hidden { display: none; }
+
+      .error-hero {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
       .icon {
+        flex-shrink: 0;
         width: 56px;
         height: 56px;
-        margin: 0 auto 1.25rem;
-        border-radius: 50%;
-        background: rgba(239, 107, 107, 0.12);
+        border-radius: 16px;
+        background: var(--danger-soft);
+        border: 1px solid rgba(239, 107, 107, 0.38);
         display: grid;
         place-items: center;
         color: var(--danger);
-        font-size: 1.5rem;
+        box-shadow: 0 10px 28px rgba(239, 107, 107, 0.14);
       }
-      h1 {
+
+      .icon svg { width: 28px; height: 28px; }
+
+      .error-copy h1 {
         font-size: 1.35rem;
-        margin-bottom: 0.5rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.35rem;
+        line-height: 1.25;
       }
-      p {
+
+      .error-copy .message {
         color: var(--muted);
-        font-size: 0.9rem;
-        line-height: 1.6;
-        margin-bottom: 0.75rem;
+        font-size: 0.86rem;
+        line-height: 1.55;
       }
-      .url {
-        font-size: 0.78rem;
+
+      .url-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .url-label {
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #6b7594;
+      }
+
+      .url-value {
+        font-family: 'Cascadia Code', 'Consolas', monospace;
+        font-size: 0.76rem;
         word-break: break-all;
-        color: var(--muted);
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        background: var(--surface);
+        color: #b8c4e8;
+        padding: 0.72rem 0.85rem;
+        border-radius: 12px;
+        background: rgba(6, 9, 16, 0.88);
         border: 1px solid var(--border);
-        margin-bottom: 1.5rem;
+        line-height: 1.45;
       }
-      button {
-        padding: 0.6rem 1.25rem;
-        border-radius: 8px;
+
+      .url-value.empty {
+        color: #6b7594;
+        font-style: italic;
+        font-family: inherit;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: auto;
+      }
+
+      .btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.65rem 1.1rem;
+        border-radius: 11px;
         border: 1px solid var(--border);
-        background: var(--surface);
+        background: rgba(255, 255, 255, 0.04);
         color: var(--text);
         font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: border-color 0.15s;
+        transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
       }
-      button:hover { border-color: var(--accent); }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .btn.primary {
+        border-color: rgba(91, 141, 239, 0.55);
+        background: rgba(91, 141, 239, 0.2);
+        color: #c8d8ff;
+      }
+
+      .btn.primary:hover {
+        background: rgba(91, 141, 239, 0.32);
+      }
+
+      .game-panel {
+        padding: 1.35rem 1.35rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .game-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .game-head h2 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #dce3f8;
+        margin-bottom: 2px;
+      }
+
+      .game-head p {
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .game-scores {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .game-score-current { color: var(--accent); }
+      .game-score-best { color: #3ecf8e; }
+
+      .game-canvas-wrap {
+        position: relative;
+        flex: 1;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(61, 74, 110, 0.58);
+        background: rgba(4, 6, 10, 0.9);
+        box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.38);
+      }
+
+      .game-canvas-wrap canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        cursor: pointer;
+      }
+
+      .game-canvas-wrap canvas:focus-visible {
+        outline: 2px solid rgba(91, 141, 239, 0.55);
+        outline-offset: 2px;
+      }
+
+      .game-overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+        text-align: center;
+        background: rgba(4, 6, 10, 0.78);
+        backdrop-filter: blur(3px);
+      }
+
+      .game-overlay.hidden { display: none; }
+
+      .game-overlay p {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #dce3f8;
+        margin-bottom: 6px;
+      }
+
+      .game-overlay span {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+
+      .game-btn {
+        padding: 7px 14px;
+        border-radius: 9px;
+        border: 1px solid rgba(91, 141, 239, 0.45);
+        background: rgba(91, 141, 239, 0.18);
+        color: #c8d8ff;
+        font: inherit;
+        font-size: 0.74rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .game-btn:hover { background: rgba(91, 141, 239, 0.3); }
+
+      .game-hint {
+        margin-top: 10px;
+        font-size: 0.66rem;
+        color: #6b7594;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="icon">!</div>
-      <h1>This site can't be reached</h1>
-      <p id="message">The page failed to load. Check your connection and try again.</p>
-      <div class="url" id="url-display"></div>
-      <button onclick="history.back()">Go back</button>
+    <div class="page">
+      <div class="ambient" aria-hidden="true">
+        <div class="ambient-glow ambient-glow-a"></div>
+        <div class="ambient-glow ambient-glow-b"></div>
+        <div class="ambient-glow ambient-glow-c"></div>
+      </div>
+      <div class="grid-overlay" aria-hidden="true"></div>
+      <div class="ambient-vignette" aria-hidden="true"></div>
+      <div class="ambient-noise" aria-hidden="true"></div>
+
+      <main class="shell">
+        <div class="layout">
+          <section class="panel error-panel" aria-labelledby="error-title">
+            <div class="panel-top">
+              <div class="brand-mark">13<span class="dot">.13</span></div>
+              <div class="error-code hidden" id="error-code"></div>
+            </div>
+
+            <div class="error-hero">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                  <path d="M10.3 4.7 4.5 18.2A1.5 1.5 0 0 0 5.9 20.5h12.2a1.5 1.5 0 0 0 1.4-2.3L13.7 4.7a1.5 1.5 0 0 0-2.6 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="error-copy">
+                <h1 id="error-title">This site can't be reached</h1>
+                <p class="message" id="message">The page failed to load. Check your connection and try again.</p>
+              </div>
+            </div>
+
+            <div class="url-block">
+              <span class="url-label">Address</span>
+              <div class="url-value" id="url-display">—</div>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn primary" id="retry-btn">Try again</button>
+              <button type="button" class="btn" id="back-btn">Go back</button>
+            </div>
+          </section>
+
+          <section class="panel game-panel" aria-label="Mini game while you wait">
+            <div class="game-head">
+              <div>
+                <h2>Pixel Snake</h2>
+                <p>Pass the time while the network sorts itself out</p>
+              </div>
+              <div class="game-scores">
+                <span class="game-score-current" id="game-score">Score: 0</span>
+                <span class="game-score-best" id="game-best">Best: 0</span>
+              </div>
+            </div>
+            <div class="game-canvas-wrap">
+              <canvas id="game-canvas" width="304" height="304" tabindex="0" aria-label="Snake game. Use arrow keys to play."></canvas>
+              <div class="game-overlay" id="game-overlay">
+                <div>
+                  <p id="game-overlay-title">Site unreachable?</p>
+                  <span>Arrow keys · eat dots · don't hit walls</span>
+                  <button type="button" class="game-btn" id="game-start">Play</button>
+                </div>
+              </div>
+            </div>
+            <p class="game-hint">Click the board, then use ↑ ↓ ← →</p>
+          </section>
+        </div>
+      </main>
     </div>
+
     <script>
       const params = new URLSearchParams(location.search);
-      const url = params.get('url') || '';
+      const failedUrl = decodeURIComponent(params.get('url') || '').trim();
       const code = params.get('code') || '';
 
-      if (url) {
-        document.getElementById('url-display').textContent = url;
+      const ERROR_MESSAGES = {
+        '-105': { title: "This site can't be reached", message: "The server couldn't be found. Check the address for typos." },
+        '-106': { title: "You're offline", message: 'No internet connection. Check your network and try again.' },
+        '-102': { title: 'Connection refused', message: 'The server refused the connection. The site may be down.' },
+        '-108': { title: 'Invalid address', message: "The web address isn't valid. Check the URL and try again." },
+        '-109': { title: 'Address unreachable', message: "The server couldn't be reached at this address." },
+        '-118': { title: 'Connection timed out', message: 'The server took too long to respond. Try again in a moment.' },
+        '-200': { title: 'Certificate error', message: "The site's security certificate isn't trusted." },
+        '-501': { title: 'Insecure connection', message: "This page can't be loaded securely." },
+      };
+
+      const known = code ? ERROR_MESSAGES[code] : null;
+      if (known) {
+        document.getElementById('error-title').textContent = known.title;
+        document.getElementById('message').textContent = known.message;
       }
+
       if (code) {
-        document.getElementById('message').textContent =
-          'Error ' + code + '. The page failed to load. Check your connection and try again.';
+        const badge = document.getElementById('error-code');
+        badge.classList.remove('hidden');
+        badge.textContent = 'Error ' + code;
       }
+
+      const urlEl = document.getElementById('url-display');
+      if (failedUrl) {
+        urlEl.textContent = failedUrl;
+      } else {
+        urlEl.textContent = 'Address unavailable';
+        urlEl.classList.add('empty');
+      }
+
+      document.getElementById('retry-btn').addEventListener('click', () => {
+        if (failedUrl) {
+          window.location.href = failedUrl;
+          return;
+        }
+        window.location.reload();
+      });
+
+      document.getElementById('back-btn').addEventListener('click', () => {
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+        window.location.href = '/newtab.html';
+      });
+
+      (function initMiniGame() {
+        const BEST_KEY = '1313-error-snake-best';
+        const canvas = document.getElementById('game-canvas');
+        const overlay = document.getElementById('game-overlay');
+        const overlayTitle = document.getElementById('game-overlay-title');
+        const startBtn = document.getElementById('game-start');
+        const scoreEl = document.getElementById('game-score');
+        const bestEl = document.getElementById('game-best');
+        if (!canvas || !overlay || !scoreEl || !bestEl) return;
+
+        const ctx = canvas.getContext('2d');
+        const CELL = 16;
+        const COLS = canvas.width / CELL;
+        const ROWS = canvas.height / CELL;
+
+        let snake = [];
+        let direction = { x: 1, y: 0 };
+        let nextDirection = { x: 1, y: 0 };
+        let food = { x: 8, y: 8 };
+        let score = 0;
+        let bestScore = 0;
+        let timer = null;
+        let running = false;
+        let tickMs = 130;
+
+        function loadBest() {
+          const stored = Number(localStorage.getItem(BEST_KEY));
+          bestScore = Number.isFinite(stored) && stored > 0 ? stored : 0;
+          bestEl.textContent = 'Best: ' + bestScore;
+        }
+
+        function updateBest() {
+          if (score <= bestScore) return;
+          bestScore = score;
+          localStorage.setItem(BEST_KEY, String(bestScore));
+          bestEl.textContent = 'Best: ' + bestScore;
+        }
+
+        function randFood() {
+          let spot = { x: 0, y: 0 };
+          do {
+            spot = {
+              x: Math.floor(Math.random() * COLS),
+              y: Math.floor(Math.random() * ROWS),
+            };
+          } while (snake.some((part) => part.x === spot.x && part.y === spot.y));
+          food = spot;
+        }
+
+        function resetGame() {
+          snake = [
+            { x: 5, y: 8 },
+            { x: 4, y: 8 },
+            { x: 3, y: 8 },
+          ];
+          direction = { x: 1, y: 0 };
+          nextDirection = { x: 1, y: 0 };
+          score = 0;
+          tickMs = 130;
+          scoreEl.textContent = 'Score: 0';
+          randFood();
+        }
+
+        function drawCell(x, y, color) {
+          ctx.fillStyle = color;
+          ctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2);
+        }
+
+        function draw() {
+          ctx.fillStyle = '#06080d';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          drawCell(food.x, food.y, '#3ecf8e');
+          snake.forEach((part, index) => {
+            drawCell(part.x, part.y, index === 0 ? '#5b8def' : '#7aa2f7');
+          });
+        }
+
+        function step() {
+          direction = nextDirection;
+          const head = {
+            x: snake[0].x + direction.x,
+            y: snake[0].y + direction.y,
+          };
+
+          if (head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS) {
+            endGame();
+            return;
+          }
+
+          if (snake.some((part) => part.x === head.x && part.y === head.y)) {
+            endGame();
+            return;
+          }
+
+          snake.unshift(head);
+
+          if (head.x === food.x && head.y === food.y) {
+            score += 1;
+            scoreEl.textContent = 'Score: ' + score;
+            updateBest();
+            const nextTick = Math.max(70, 130 - score * 4);
+            if (nextTick !== tickMs) {
+              tickMs = nextTick;
+              startLoop();
+            }
+            randFood();
+          } else {
+            snake.pop();
+          }
+
+          draw();
+        }
+
+        function startLoop() {
+          if (timer) clearInterval(timer);
+          timer = setInterval(step, tickMs);
+        }
+
+        function startGame() {
+          resetGame();
+          running = true;
+          overlay.classList.add('hidden');
+          draw();
+          startLoop();
+          canvas.focus();
+        }
+
+        function endGame() {
+          running = false;
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          updateBest();
+          const bestNote = score >= bestScore && score > 0 ? ' · New best!' : '';
+          overlayTitle.textContent = score > 0
+            ? 'Game over · Score ' + score + bestNote
+            : 'Game over';
+          startBtn.textContent = 'Play again';
+          overlay.classList.remove('hidden');
+        }
+
+        function handleDirection(key) {
+          const map = {
+            ArrowUp: { x: 0, y: -1 },
+            ArrowDown: { x: 0, y: 1 },
+            ArrowLeft: { x: -1, y: 0 },
+            ArrowRight: { x: 1, y: 0 },
+          };
+          const next = map[key];
+          if (!next) return;
+          if (next.x === -direction.x && next.y === -direction.y) return;
+          nextDirection = next;
+        }
+
+        startBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          startGame();
+        });
+
+        canvas.addEventListener('click', () => {
+          if (!running) startGame();
+          else canvas.focus();
+        });
+
+        canvas.addEventListener('keydown', (e) => {
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            if (!running) startGame();
+            handleDirection(e.key);
+          }
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (!running) return;
+          if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+          if (document.activeElement === canvas) return;
+          e.preventDefault();
+          handleDirection(e.key);
+        });
+
+        loadBest();
+        resetGame();
+        draw();
+      })();
     </script>
   </body>
 </html>
