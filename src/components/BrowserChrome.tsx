@@ -1,4 +1,12 @@
-import type { ContentProtectionState, TabInfo } from '../types/browser';
+import { useEffect, useRef } from 'react';
+import type {
+  Bookmark,
+  ContentProtectionState,
+  PrivacySettings,
+  TabInfo,
+} from '../types/browser';
+import { BookmarkBar } from './BookmarkBar';
+import { FindBar } from './FindBar';
 import { TabBar } from './TabBar';
 import { Toolbar } from './Toolbar';
 
@@ -7,6 +15,14 @@ interface BrowserChromeProps {
   activeTab: TabInfo | null;
   addressValue: string;
   protection: ContentProtectionState;
+  privacySettings: PrivacySettings;
+  maximized: boolean;
+  zoomLevel: number;
+  bookmarks: Bookmark[];
+  isBookmarked: boolean;
+  findOpen: boolean;
+  findQuery: string;
+  findResult: { activeMatch: number; matches: number };
   addressRef: React.RefObject<HTMLInputElement | null>;
   onAddressChange: (value: string) => void;
   onAddressFocus: () => void;
@@ -18,48 +34,126 @@ interface BrowserChromeProps {
   onReload: () => void;
   onStop: () => void;
   onToggleProtection: () => void;
+  onToggleBookmark: () => void;
+  onOpenFind: () => void;
+  onOpenPrivacy: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onZoomReset: () => void;
   onNewTab: () => void;
+  onNewPrivateTab: () => void;
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string) => void;
+  onBookmarkNavigate: (url: string) => void;
+  onRemoveBookmark: (id: string) => void;
+  onFindQueryChange: (value: string) => void;
+  onFindNext: () => void;
+  onFindPrev: () => void;
+  onCloseFind: () => void;
+  onMinimize: () => void;
+  onToggleMaximize: () => void;
+  onCloseWindow: () => void;
 }
 
-export function BrowserChrome({
-  tabs,
-  activeTab,
-  addressValue,
-  protection,
-  addressRef,
-  onAddressChange,
-  onAddressFocus,
-  onAddressBlur,
-  onNavigate,
-  onGoBack,
-  onGoForward,
-  onGoHome,
-  onReload,
-  onStop,
-  onToggleProtection,
-  onNewTab,
-  onSwitchTab,
-  onCloseTab,
-}: BrowserChromeProps) {
+function computePrivacyScore(settings: PrivacySettings, protection: boolean): number {
+  return Math.min(
+    100,
+    (settings.blockTrackers ? 25 : 0) +
+      (settings.sendDoNotTrack ? 20 : 0) +
+      (settings.blockPermissions ? 25 : 0) +
+      (protection ? 30 : 0),
+  );
+}
+
+export function BrowserChrome(props: BrowserChromeProps) {
+  const chromeRef = useRef<HTMLElement>(null);
+  const {
+    tabs,
+    activeTab,
+    addressValue,
+    protection,
+    privacySettings,
+    maximized,
+    zoomLevel,
+    bookmarks,
+    isBookmarked,
+    findOpen,
+    findQuery,
+    findResult,
+    addressRef,
+    onAddressChange,
+    onAddressFocus,
+    onAddressBlur,
+    onNavigate,
+    onGoBack,
+    onGoForward,
+    onGoHome,
+    onReload,
+    onStop,
+    onToggleProtection,
+    onToggleBookmark,
+    onOpenFind,
+    onOpenPrivacy,
+    onZoomIn,
+    onZoomOut,
+    onZoomReset,
+    onNewTab,
+    onNewPrivateTab,
+    onSwitchTab,
+    onCloseTab,
+    onBookmarkNavigate,
+    onRemoveBookmark,
+    onFindQueryChange,
+    onFindNext,
+    onFindPrev,
+    onCloseFind,
+    onMinimize,
+    onToggleMaximize,
+    onCloseWindow,
+  } = props;
+
   const anyLoading = tabs.some((tab) => tab.isLoading);
+  const privacyScore = computePrivacyScore(privacySettings, protection.enabled);
+
+  useEffect(() => {
+    const el = chromeRef.current;
+    if (!el) return;
+
+    const syncHeight = (): void => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      void window.browserApi.setChromeHeight(height);
+    };
+
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <header className="browser-chrome">
+    <header ref={chromeRef} className="browser-chrome">
       {anyLoading && <div className="loading-bar" aria-hidden="true" />}
 
       <TabBar
         tabs={tabs}
+        privacyScore={privacyScore}
+        maximized={maximized}
         onNewTab={onNewTab}
+        onNewPrivateTab={onNewPrivateTab}
         onSwitchTab={onSwitchTab}
         onCloseTab={onCloseTab}
+        onOpenPrivacy={onOpenPrivacy}
+        onMinimize={onMinimize}
+        onToggleMaximize={onToggleMaximize}
+        onCloseWindow={onCloseWindow}
       />
 
       <Toolbar
         activeTab={activeTab}
         addressValue={addressValue}
         protection={protection}
+        zoomLevel={zoomLevel}
+        isBookmarked={isBookmarked}
         addressRef={addressRef}
         onAddressChange={onAddressChange}
         onAddressFocus={onAddressFocus}
@@ -71,18 +165,30 @@ export function BrowserChrome({
         onReload={onReload}
         onStop={onStop}
         onToggleProtection={onToggleProtection}
+        onToggleBookmark={onToggleBookmark}
+        onOpenFind={onOpenFind}
+        onOpenPrivacy={onOpenPrivacy}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
+        onZoomReset={onZoomReset}
       />
 
-      <div className="status-row">
-        <span className="page-title">{activeTab?.title || 'New Tab'}</span>
-        <span className="protection-note">
-          {protection.enabled
-            ? protection.supported
-              ? 'Protected from screen capture'
-              : 'Capture shows black window on older Windows'
-            : 'Screen capture allowed'}
-        </span>
-      </div>
+      <BookmarkBar
+        bookmarks={bookmarks}
+        onNavigate={onBookmarkNavigate}
+        onRemove={onRemoveBookmark}
+      />
+
+      {findOpen && (
+        <FindBar
+          query={findQuery}
+          result={findResult}
+          onQueryChange={onFindQueryChange}
+          onNext={onFindNext}
+          onPrev={onFindPrev}
+          onClose={onCloseFind}
+        />
+      )}
     </header>
   );
 }

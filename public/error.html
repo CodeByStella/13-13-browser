@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Not Available — 13.13 Browser</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0c10;
+        --surface: #12151c;
+        --border: #252b38;
+        --text: #eef1f7;
+        --muted: #8b95a8;
+        --accent: #6b93f0;
+        --danger: #ef6b6b;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .card {
+        max-width: 480px;
+        text-align: center;
+      }
+      .icon {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 1.25rem;
+        border-radius: 50%;
+        background: rgba(239, 107, 107, 0.12);
+        display: grid;
+        place-items: center;
+        color: var(--danger);
+        font-size: 1.5rem;
+      }
+      h1 {
+        font-size: 1.35rem;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+      }
+      .url {
+        font-size: 0.78rem;
+        word-break: break-all;
+        color: var(--muted);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        margin-bottom: 1.5rem;
+      }
+      button {
+        padding: 0.6rem 1.25rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+      button:hover { border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon">!</div>
+      <h1>This site can't be reached</h1>
+      <p id="message">The page failed to load. Check your connection and try again.</p>
+      <div class="url" id="url-display"></div>
+      <button onclick="history.back()">Go back</button>
+    </div>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const url = params.get('url') || '';
+      const code = params.get('code') || '';
+
+      if (url) {
+        document.getElementById('url-display').textContent = url;
+      }
+      if (code) {
+        document.getElementById('message').textContent =
+          'Error ' + code + '. The page failed to load. Check your connection and try again.';
+      }
+    </script>
+  </body>
+</html>
