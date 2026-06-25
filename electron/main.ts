@@ -8,6 +8,7 @@ import { initAppBranding } from './lib/app-branding';
 import { setGlobalShortcutToggleHandler, unregisterGlobalShortcuts } from './lib/global-shortcuts';
 import { attachKeyboardShortcuts } from './lib/keyboard-shortcuts';
 import { initAppSettings } from './services/app-settings/app-settings';
+import { initAppUpdater } from './services/update/app-updater';
 import {
   destroyTray,
   initTray,
@@ -60,6 +61,7 @@ app.on('before-quit', () => {
 app.whenReady().then(() => {
   setGlobalShortcutToggleHandler(toggleWindowVisibility);
   initAppSettings();
+  initAppUpdater();
   void bootstrap();
 
   app.on('activate', () => {

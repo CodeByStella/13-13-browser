@@ -4,9 +4,10 @@ import path from 'node:path';
 import { IPC_EVENTS } from '@shared/ipc/channels';
 import type { Bookmark } from '@shared/types';
 
-import { resolveAppIcon } from '../lib/app-branding';
+import { applyWindowIcon, resolveAppIconImage } from '../lib/app-branding';
 
 import { getContentProtectionState, isContentProtectionEnabled, setContentProtectionPreference } from '../services/privacy/content-protection';
+import { loadSession } from '../stores/session-store';
 import { normalizeDevServerUrl, waitForDevServer } from '../lib/dev-server';
 import { startDevReloadWatcher } from '../lib/dev-reload';
 import {
@@ -39,7 +40,7 @@ export interface MainWindowHandles {
 export async function createMainWindow(): Promise<MainWindowHandles> {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   const isDev = !!devServerUrl;
-  const icon = resolveAppIcon();
+  const icon = resolveAppIconImage();
 
   const mainWindow = new BrowserWindow({
     width: 1360,
@@ -47,7 +48,7 @@ export async function createMainWindow(): Promise<MainWindowHandles> {
     minWidth: 720,
     minHeight: 520,
     title: '13.13 Browser',
-    backgroundColor: '#0a0c10',
+    backgroundColor: '#2b2b2b',
     frame: false,
     autoHideMenuBar: true,
     show: false,
@@ -59,6 +60,8 @@ export async function createMainWindow(): Promise<MainWindowHandles> {
       sandbox: true,
     },
   });
+
+  mainWindow.once('ready-to-show', () => applyWindowIcon(mainWindow));
 
   const tabManager = new TabManager(mainWindow, isDev);
   initPrivacy(mainWindow);
@@ -93,7 +96,12 @@ export async function createMainWindow(): Promise<MainWindowHandles> {
     if (tabsInitialized) return;
     tabsInitialized = true;
 
-    tabManager.createTab();
+    const session = loadSession();
+    if (session) {
+      tabManager.restoreSession(session);
+    } else {
+      tabManager.createTab();
+    }
 
     broadcastInitialPrivacyState();
     mainWindow.webContents.send(IPC_EVENTS.CONTENT_PROTECTION_STATE, getContentProtectionState());

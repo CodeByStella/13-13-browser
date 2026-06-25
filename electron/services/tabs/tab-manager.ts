@@ -15,17 +15,24 @@ import {
   type BrowserState,
   type TabInfo,
 } from '../../lib/shared';
+import { SNAKE_GAME_ADDRESS, resolveInternalBrowserUrl } from '@shared/utils/internal-urls';
 import { staticPageUrl } from '../../lib/dev-static-pages';
-import { saveSession, type SessionData } from '../../stores/session-store';
+import { saveSession, normalizeSessionEntries, type SessionData } from '../../stores/session-store';
 import { attachPrivacySession } from '../privacy/privacy';
 import { attachKeyboardShortcuts } from '../../lib/keyboard-shortcuts';
 import { brandDevToolsWindows, DEVTOOLS_WINDOW_TITLE } from '../../lib/app-branding';
+import {
+  isNewTabPageUrl,
+  persistShortcutsFromWebContents,
+  restoreShortcutsToWebContents,
+} from '../newtab/newtab-shortcuts-sync';
 
 interface Tab {
   id: string;
   view: BrowserView;
   favicon?: string;
   isPrivate: boolean;
+  isPinned: boolean;
   /** URL being loaded or that failed — shown in chrome while internal page is visible. */
   pendingUrl?: string;
 }
@@ -50,24 +57,35 @@ export class TabManager {
     this.window = window;
     this.newTabPageUrl = staticPageUrl(isDev, 'newtab.html');
     this.errorPageUrl = staticPageUrl(isDev, 'error.html');
-    this.newTabFaviconUrl = staticPageUrl(isDev, 'newtab-icon.svg');
+    this.newTabFaviconUrl = staticPageUrl(isDev, 'newtab-icon.png');
     this.errorFaviconUrl = staticPageUrl(isDev, 'error-icon.svg');
   }
 
   restoreSession(session: SessionData): void {
-    session.tabs.forEach((url, index) => {
-      const id = this.createTab(url, { activate: false });
+    const entries = normalizeSessionEntries(session.tabs);
+    const pinned = entries.filter((entry) => entry.pinned);
+    const unpinned = entries.filter((entry) => !entry.pinned);
+    const ordered = [...pinned, ...unpinned];
+
+    let activeId: string | null = null;
+    ordered.forEach((entry, index) => {
+      const id = this.createTab(entry.url, { activate: false, pinned: entry.pinned });
       if (index === session.activeIndex) {
-        this.switchTab(id);
+        activeId = id;
       }
     });
 
-    if (!this.activeTabId && this.tabOrder.length > 0) {
+    if (activeId) {
+      this.switchTab(activeId);
+    } else if (this.tabOrder.length > 0) {
       this.switchTab(this.tabOrder[0]);
     }
   }
 
-  createTab(url?: string, options?: { activate?: boolean; isPrivate?: boolean }): string {
+  createTab(
+    url?: string,
+    options?: { activate?: boolean; isPrivate?: boolean; pinned?: boolean },
+  ): string {
     const id = randomUUID();
     const isPrivate = options?.isPrivate ?? false;
     const partition = isPrivate ? `private:${id}` : 'persist:browser';
@@ -84,8 +102,12 @@ export class TabManager {
     attachPrivacySession(view.webContents.session);
 
     this.attachViewEvents(id, view);
-    this.tabs.set(id, { id, view, isPrivate });
+    const isPinned = !isPrivate && (options?.pinned ?? false);
+    this.tabs.set(id, { id, view, isPrivate, isPinned });
     this.tabOrder.push(id);
+    if (isPinned) {
+      this.moveTabToPinnedSection(id);
+    }
 
     if (!url || url === this.newTabPageUrl) {
       this.tabs.get(id)!.favicon = this.newTabFaviconUrl;
@@ -104,9 +126,12 @@ export class TabManager {
       }
     }
 
-    view.webContents.loadURL(url ?? this.newTabPageUrl);
+    const target = this.resolveNavigationTarget(url);
+    view.webContents.loadURL(target.href);
     const tabEntry = this.tabs.get(id)!;
-    if (url && !this.isInternalPage(url)) {
+    if (target.displayUrl) {
+      tabEntry.pendingUrl = target.displayUrl;
+    } else if (url && !this.isInternalPage(target.href)) {
       tabEntry.pendingUrl = url;
     }
     this.broadcastState();
@@ -186,6 +211,13 @@ export class TabManager {
     const tab = this.getActiveTab();
     if (!tab) return rawUrl;
 
+    const internal = resolveInternalBrowserUrl(rawUrl, this.errorPageUrl);
+    if (internal) {
+      tab.pendingUrl = internal.display;
+      tab.view.webContents.loadURL(internal.href);
+      return internal.display;
+    }
+
     const url = normalizeUrl(rawUrl, this.newTabPageUrl);
     tab.pendingUrl = this.isInternalPage(url) ? undefined : url;
     tab.view.webContents.loadURL(url);
@@ -238,6 +270,20 @@ export class TabManager {
     return this.createTab(tab.view.webContents.getURL());
   }
 
+  togglePinTab(id: string): void {
+    const tab = this.tabs.get(id);
+    if (!tab || tab.isPrivate) return;
+
+    tab.isPinned = !tab.isPinned;
+    if (tab.isPinned) {
+      this.moveTabToPinnedSection(id);
+    } else {
+      this.moveTabAfterPinnedSection(id);
+    }
+    this.persistSession();
+    this.broadcastState();
+  }
+
   toggleDevTools(): void {
     const wc = this.getActiveWebContents();
     if (!wc) return;
@@ -279,18 +325,35 @@ export class TabManager {
   }
 
   persistSession(): void {
-    const tabs = this.tabOrder
-      .map((id) => {
-        const tab = this.tabs.get(id);
-        if (!tab || tab.isPrivate) return null;
-        return tab.view.webContents.getURL();
-      })
-      .filter((url): url is string => !!url && !this.isInternalPage(url));
+    const entries: { url: string; pinned: boolean }[] = [];
+    let activeIndex = 0;
 
-    if (tabs.length === 0) return;
+    for (const id of this.tabOrder) {
+      const tab = this.tabs.get(id);
+      if (!tab || tab.isPrivate) continue;
 
-    const activeIndex = Math.max(0, this.tabOrder.indexOf(this.activeTabId ?? ''));
-    saveSession({ tabs, activeIndex: Math.min(activeIndex, tabs.length - 1) });
+      const url = tab.view.webContents.getURL();
+      if (!url) continue;
+
+      if (tab.isPinned) {
+        entries.push({ url, pinned: true });
+      } else if (!this.isInternalPage(url)) {
+        entries.push({ url, pinned: false });
+      } else {
+        continue;
+      }
+
+      if (id === this.activeTabId) {
+        activeIndex = entries.length - 1;
+      }
+    }
+
+    if (entries.length === 0) return;
+
+    saveSession({
+      tabs: entries,
+      activeIndex: Math.max(0, Math.min(activeIndex, entries.length - 1)),
+    });
   }
 
   layout(): void {
@@ -379,14 +442,31 @@ export class TabManager {
   private getFailedUrlFromErrorPage(url: string): string | null {
     if (!this.isErrorPage(url)) return null;
     try {
-      return new URL(url).searchParams.get('url') || null;
+      const parsed = new URL(url);
+      if (parsed.searchParams.get('mode') === 'game') return null;
+      return parsed.searchParams.get('url') || null;
     } catch {
       return null;
     }
   }
 
+  private getInternalDisplayUrl(rawUrl: string): string | null {
+    if (!this.isErrorPage(rawUrl)) return null;
+    try {
+      if (new URL(rawUrl).searchParams.get('mode') === 'game') {
+        return SNAKE_GAME_ADDRESS;
+      }
+    } catch {
+      if (rawUrl.includes('mode=game')) return SNAKE_GAME_ADDRESS;
+    }
+    return null;
+  }
+
   private getDisplayUrl(tab: Tab): string {
     const rawUrl = tab.view.webContents.getURL();
+    const internalDisplay = this.getInternalDisplayUrl(rawUrl);
+    if (internalDisplay) return internalDisplay;
+
     const failedUrl = this.getFailedUrlFromErrorPage(rawUrl);
     if (failedUrl) return failedUrl;
 
@@ -397,8 +477,32 @@ export class TabManager {
     return rawUrl;
   }
 
+  private resolveNavigationTarget(rawUrl?: string): { href: string; displayUrl?: string } {
+    if (!rawUrl) {
+      return { href: this.newTabPageUrl };
+    }
+
+    const internal = resolveInternalBrowserUrl(rawUrl, this.errorPageUrl);
+    if (internal) {
+      return { href: internal.href, displayUrl: internal.display };
+    }
+
+    return { href: normalizeUrl(rawUrl, this.newTabPageUrl) };
+  }
+
   private isInternalPage(url: string): boolean {
     return this.isNewTabPage(url) || this.isErrorPage(url);
+  }
+
+  getNormalTabWebContents(): WebContents[] {
+    const contents: WebContents[] = [];
+    for (const id of this.tabOrder) {
+      const tab = this.tabs.get(id);
+      if (!tab || tab.isPrivate) continue;
+      const wc = tab.view.webContents;
+      if (!wc.isDestroyed()) contents.push(wc);
+    }
+    return contents;
   }
 
   private getActiveTab(): Tab | undefined {
@@ -456,7 +560,16 @@ export class TabManager {
 
     wc.on('did-stop-loading', () => {
       this.setLoadingProgress(false);
+      if (isNewTabPageUrl(wc.getURL())) {
+        void persistShortcutsFromWebContents(wc);
+      }
       notify();
+    });
+
+    wc.on('did-finish-load', () => {
+      if (isNewTabPageUrl(wc.getURL())) {
+        void restoreShortcutsToWebContents(wc);
+      }
     });
 
     wc.on('did-navigate', (_event, url) => {
@@ -515,7 +628,7 @@ export class TabManager {
       if (tabEntry && validatedURL) {
         tabEntry.pendingUrl = validatedURL;
       }
-      wc.loadURL(`${this.errorPageUrl}?${params.toString()}`, { replace: true });
+      wc.loadURL(`${this.errorPageUrl}?${params.toString()}`);
     });
 
     wc.on('found-in-page', (_event, result) => {
@@ -547,7 +660,29 @@ export class TabManager {
       isSecure: isSecureUrl(this.getFailedUrlFromErrorPage(rawUrl) ?? rawUrl),
       favicon: tab.favicon,
       isPrivate: tab.isPrivate,
+      isPinned: tab.isPinned,
     };
+  }
+
+  private moveTabInOrder(id: string, index: number): void {
+    this.tabOrder = this.tabOrder.filter((tabId) => tabId !== id);
+    this.tabOrder.splice(Math.max(0, Math.min(index, this.tabOrder.length)), 0, id);
+  }
+
+  private moveTabToPinnedSection(id: string): void {
+    const pinnedEnd = this.tabOrder.reduce(
+      (count, tabId) => (this.tabs.get(tabId)?.isPinned && tabId !== id ? count + 1 : count),
+      0,
+    );
+    this.moveTabInOrder(id, pinnedEnd);
+  }
+
+  private moveTabAfterPinnedSection(id: string): void {
+    const firstUnpinned = this.tabOrder.findIndex(
+      (tabId) => tabId !== id && !this.tabs.get(tabId)?.isPinned,
+    );
+    const insertAt = firstUnpinned === -1 ? this.tabOrder.length : firstUnpinned;
+    this.moveTabInOrder(id, insertAt);
   }
 
   private broadcastState(): void {

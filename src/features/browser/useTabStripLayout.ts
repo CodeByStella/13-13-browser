@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 
+import type { TabInfo } from '../../types/browser';
+
 const TAB_COMPACT_THRESHOLD = 72;
 const TAB_PREFERRED_WIDTH = 240;
 const TAB_GAP = 3;
 const NEW_TAB_WIDTH = 28;
+const PINNED_TAB_WIDTH = 46;
 
-export function useTabStripLayout(tabCount: number, activeTabId: string | null) {
+export function useTabStripLayout(tabs: TabInfo[], activeTabId: string | null) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [needsOverflow, setNeedsOverflow] = useState(false);
+  const pinnedCount = tabs.filter((tab) => tab.isPinned).length;
+  const unpinnedCount = tabs.length - pinnedCount;
 
   useEffect(() => {
     const scroll = scrollRef.current;
@@ -19,12 +24,16 @@ export function useTabStripLayout(tabCount: number, activeTabId: string | null) 
     const update = (): void => {
       const stripWidth = strip.clientWidth;
       const chrome = NEW_TAB_WIDTH + TAB_GAP + 8;
+      const pinnedWidth =
+        pinnedCount > 0
+          ? pinnedCount * PINNED_TAB_WIDTH + TAB_GAP * Math.max(0, pinnedCount - 1)
+          : 0;
+      const unpinnedGaps = TAB_GAP * Math.max(0, unpinnedCount - 1);
+      const available = stripWidth - chrome - pinnedWidth - unpinnedGaps;
       const perTab =
-        tabCount > 0
-          ? (stripWidth - chrome - TAB_GAP * Math.max(0, tabCount - 1)) / tabCount
-          : TAB_PREFERRED_WIDTH;
+        unpinnedCount > 0 ? available / unpinnedCount : TAB_PREFERRED_WIDTH;
 
-      setIsCompact(perTab <= TAB_COMPACT_THRESHOLD);
+      setIsCompact(unpinnedCount > 0 && perTab <= TAB_COMPACT_THRESHOLD);
       setNeedsOverflow(scroll.scrollWidth > scroll.clientWidth + 1);
     };
 
@@ -33,7 +42,7 @@ export function useTabStripLayout(tabCount: number, activeTabId: string | null) 
     observer.observe(strip);
     observer.observe(scroll);
     return () => observer.disconnect();
-  }, [tabCount]);
+  }, [pinnedCount, unpinnedCount]);
 
   useEffect(() => {
     if (!activeTabId || !scrollRef.current) return;
@@ -41,7 +50,7 @@ export function useTabStripLayout(tabCount: number, activeTabId: string | null) 
       `[data-tab-id="${activeTabId}"]`,
     );
     active?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-  }, [activeTabId, tabCount, needsOverflow]);
+  }, [activeTabId, tabs.length, needsOverflow]);
 
   return { scrollRef, stripRef, isCompact, needsOverflow };
 }

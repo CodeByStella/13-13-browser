@@ -1,0 +1,56 @@
+/* Shared flat Chrome-like dark theme for popup pages */
+:root {
+  color-scheme: dark;
+  --chrome-bg: #2b2b2b;
+  --bg: #2b2b2b;
+  --surface: #2b2b2b;
+  --surface-raised: #353535;
+  --surface-hover: #3a3a3a;
+  --omnibox-bg: #1f1f1f;
+  --border: #3f3f3f;
+  --border-light: #4a4a4a;
+  --text: #e8eaed;
+  --text-muted: #9aa0a6;
+  --accent: #8ab4f8;
+  --accent-glow: transparent;
+  --privacy: #81c995;
+  --privacy-glow: transparent;
+  --private: #c58af9;
+  --danger: #f28b82;
+  --gold: #fdd663;
+  --inset: none;
+  --raised: none;
+}
+
+.flat-panel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.flat-menu {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.flat-btn {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+
+.flat-btn:hover {
+  background: var(--surface-hover);
+  box-shadow: none;
+}
+
+.flat-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: none;
+}

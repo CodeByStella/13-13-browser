@@ -30,6 +30,7 @@ import {
   closeSitePermissionsPanel,
   showSitePermissionsPanel,
 } from '../windows/site-permissions-window';
+import { showTabPicker } from '../windows/tab-picker-window';
 
 export function registerChromeIpc(): void {
   ipcMain.handle(IPC.SHOW_TOOLBAR_MENU, (_event, anchor: { x: number; y: number; width: number }) => {
@@ -124,6 +125,25 @@ export function registerChromeIpc(): void {
         bookmarkId,
         defaultTitle,
         getAppContext().isDev(),
+      );
+    },
+  );
+
+  ipcMain.handle(
+    IPC.SHOW_TAB_PICKER,
+    (
+      _event,
+      anchor: { x: number; y: number; width: number; height?: number },
+      toggle?: boolean,
+    ): boolean => {
+      const mainWindow = getAppContext().getMainWindow();
+      if (!mainWindow) return false;
+      return showTabPicker(
+        mainWindow,
+        getAppContext().getTabManager(),
+        anchor,
+        getAppContext().isDev(),
+        { toggle },
       );
     },
   );

@@ -27,6 +27,11 @@ export const browserApi = {
   switchTab: (id: string): Promise<void> => ipcRenderer.invoke(IPC.SWITCH_TAB, id),
   duplicateTab: (id: string): Promise<void> => ipcRenderer.invoke(IPC.DUPLICATE_TAB, id),
   reopenClosedTab: (): Promise<void> => ipcRenderer.invoke(IPC.REOPEN_CLOSED_TAB),
+  togglePinTab: (id: string): Promise<void> => ipcRenderer.invoke(IPC.TOGGLE_PIN_TAB, id),
+  showTabContextMenu: (
+    tabId: string,
+    anchor: { x: number; y: number; width: number; height?: number },
+  ): Promise<void> => ipcRenderer.invoke(IPC.SHOW_TAB_CONTEXT_MENU, tabId, anchor),
   zoomIn: (): Promise<number> => ipcRenderer.invoke(IPC.ZOOM_IN),
   zoomOut: (): Promise<number> => ipcRenderer.invoke(IPC.ZOOM_OUT),
   zoomReset: (): Promise<number> => ipcRenderer.invoke(IPC.ZOOM_RESET),
@@ -80,6 +85,15 @@ export const browserApi = {
     defaultTitle: string,
   ): Promise<void> =>
     ipcRenderer.invoke(IPC.SHOW_BOOKMARK_RENAME, anchor, bookmarkId, defaultTitle),
+  showTabPicker: (
+    anchor: { x: number; y: number; width: number; height?: number },
+    toggle?: boolean,
+  ): Promise<boolean> => ipcRenderer.invoke(IPC.SHOW_TAB_PICKER, anchor, toggle),
+  onTabPickerClosed: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on(IPC_EVENTS.TAB_PICKER_CLOSED, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.TAB_PICKER_CLOSED, listener);
+  },
   getPrivacyState: (): Promise<PrivacyState> => ipcRenderer.invoke(IPC.GET_PRIVACY_STATE),
   updatePrivacySettings: (partial: Partial<PrivacySettings>): Promise<PrivacySettings> =>
     ipcRenderer.invoke(IPC.UPDATE_PRIVACY_SETTINGS, partial),

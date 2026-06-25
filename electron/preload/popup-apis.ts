@@ -13,7 +13,9 @@ import type {
   SitePermissionKey,
   SitePermissionsSnapshot,
   SitePermissionValue,
+  TabPickerItemPayload,
   TraySettingsPanelData,
+  UpdateState,
 } from '@shared/types';
 
 export const bookmarkMenuApi = {
@@ -115,6 +117,26 @@ export const aboutApi = {
   },
   close: (): Promise<void> => ipcRenderer.invoke(IPC.ABOUT_CLOSE),
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IPC.OPEN_EXTERNAL, url),
+  getUpdateState: (): Promise<UpdateState> => ipcRenderer.invoke(IPC.GET_UPDATE_STATE),
+  checkForUpdates: (): Promise<UpdateState> => ipcRenderer.invoke(IPC.CHECK_FOR_UPDATES),
+  downloadUpdate: (): Promise<UpdateState> => ipcRenderer.invoke(IPC.DOWNLOAD_UPDATE),
+  installUpdate: (): Promise<void> => ipcRenderer.invoke(IPC.INSTALL_UPDATE),
+  onUpdateState: (callback: (state: UpdateState) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: UpdateState) => callback(state);
+    ipcRenderer.on(IPC_EVENTS.UPDATE_STATE, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.UPDATE_STATE, listener);
+  },
+};
+
+export const tabPickerApi = {
+  onData: (callback: (tabs: TabPickerItemPayload[]) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, tabs: TabPickerItemPayload[]) =>
+      callback(tabs);
+    ipcRenderer.on(IPC_EVENTS.TAB_PICKER_DATA, listener);
+    return () => ipcRenderer.removeListener(IPC_EVENTS.TAB_PICKER_DATA, listener);
+  },
+  select: (tabId: string): Promise<void> => ipcRenderer.invoke(IPC.TAB_PICKER_SELECT, tabId),
+  close: (): Promise<void> => ipcRenderer.invoke(IPC.TAB_PICKER_CLOSE),
 };
 
 export type {

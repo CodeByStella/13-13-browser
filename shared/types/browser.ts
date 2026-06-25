@@ -9,6 +9,7 @@ export interface TabInfo {
   isActive: boolean;
   isSecure: boolean;
   isPrivate: boolean;
+  isPinned: boolean;
 }
 
 export interface BrowserState {
