@@ -7,8 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-06-25
+
 ### Added
-- Documentation set: privacy policy, contributing guide, code of conduct, security policy, architecture overview
+
+#### Browsing
+- **Pin tabs** — pin/unpin via tab context menu; pinned tabs stay fixed at the left with icon-only width
+- **Tab search picker** — filter and switch open tabs from a dropdown anchored to the tab bar
+- **Tab context menu** — right-click a tab for pin/unpin and close actions
+- **Session restore** — pinned tab order and pin state are saved and restored on restart
+- **Direct snake game URL** — open the built-in Pixel Snake game from the address bar with `1313://snake`
+
+#### New tab page
+- **Persistent quick links** — customizable shortcuts saved to disk (`newtab-shortcuts.json`) and synced with page storage
+- Shortcuts are backed up before **Clear browsing data** so quick links are not lost
+
+#### Updates
+- **Auto-update** via `electron-updater` with GitHub release publishing
+- **About dialog** update controls — check for updates, download progress, and install when ready
+- Silent background update check on startup (packaged builds only)
+
+#### UI
+- Chrome-like **flat dark theme** for popup pages (`chrome-theme.css`) shared across about, tab picker, privacy panel, bookmark menu, and other overlays
+- Tab bar **search button** and Chrome-style **active-tab curves**
+- Pinned tab visual treatment (compact, favicon-first layout)
+- Updated app icon and improved Windows icon handling (256 px resize, separate dev `AppUserModelId`)
+
+#### Documentation
+- [Development and release workflow guide](./docs/WORKFLOW.md) — daily editing, branches, tagging, CI releases, and tag recovery
+
+### Changed
+- Tab strip layout calculates width separately for pinned and unpinned tabs
+- Session store format now records a `pinned` flag per tab (migrates legacy URL-only sessions)
+- Main window background color aligned with the flat Chrome theme (`#2b2b2b`)
+- Error page styling updated to match the shared flat theme; game-only layout when opened via `1313://snake`
+- Tray and DevTools windows use native image icons for sharper rendering on Windows
 
 ## [1.0.0] - 2026-06-11
 
@@ -56,4 +89,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 [Unreleased]: CHANGELOG.md#unreleased
+[2.0.0]: CHANGELOG.md#200---2026-06-25
 [1.0.0]: CHANGELOG.md#100---2026-06-11
