@@ -17,6 +17,7 @@ import {
 } from '../permissions/site-permissions';
 import { initContentProtectionFromSettings, setContentProtectionPreference } from './content-protection';
 import { backupNewTabShortcutsBeforeClear } from '../newtab/newtab-shortcuts-sync';
+import { applySessionUserAgent } from '../../lib/browser-user-agent';
 
 const TRACKER_DOMAINS = [
   'google-analytics.com',
@@ -118,6 +119,7 @@ function setupSession(sess: Session): void {
   if (configuredSessions.has(sess)) return;
   configuredSessions.add(sess);
 
+  applySessionUserAgent(sess);
   attachSitePermissions(sess);
 
   sess.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {

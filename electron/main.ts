@@ -5,6 +5,7 @@ import { IPC_EVENTS } from '@shared/ipc/channels';
 import { createMainWindow } from './app/create-main-window';
 import { initAppContext } from './app/context';
 import { initAppBranding } from './lib/app-branding';
+import { initBrowserUserAgent } from './lib/browser-user-agent';
 import { setGlobalShortcutToggleHandler, unregisterGlobalShortcuts } from './lib/global-shortcuts';
 import { attachKeyboardShortcuts } from './lib/keyboard-shortcuts';
 import { initAppSettings } from './services/app-settings/app-settings';
@@ -23,6 +24,7 @@ import { getBookmarksService, registerAllIpc } from './ipc/register';
 app.commandLine.appendSwitch('log-level', '3');
 
 initAppBranding();
+initBrowserUserAgent();
 
 async function bootstrap(): Promise<void> {
   let mainWindow: BrowserWindow | null = null;

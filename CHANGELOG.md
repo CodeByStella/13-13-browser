@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-06-25
+
+### Fixed
+
+- **Site compatibility** — use a Chrome-like user agent on all tab sessions so sites no longer reject the browser as unsupported (Electron token removed from `User-Agent`)
+- **Auto-update on private GitHub repo** — CI builds now embed release credentials (`GH_TOKEN`) so in-app update checks can reach private releases; clearer error message when update check fails
+
 ## [2.0.0] - 2026-06-25
 
 ### Added

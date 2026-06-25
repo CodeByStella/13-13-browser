@@ -38,6 +38,14 @@ export function registerAboutUpdateTarget(webContents: WebContents): void {
   }
 }
 
+function formatUpdateError(error: Error): string {
+  const text = error.message;
+  if (text.includes('404') || text.includes('releases.atom')) {
+    return 'Update check failed. Reinstall from GitHub Releases if auto-update is unavailable.';
+  }
+  return text;
+}
+
 export function initAppUpdater(): void {
   if (initialized) return;
   initialized = true;
@@ -95,7 +103,7 @@ export function initAppUpdater(): void {
     }
     patchState({
       status: 'error',
-      message: error.message,
+      message: formatUpdateError(error),
     });
     explicitCheck = false;
   });
@@ -122,7 +130,9 @@ export async function checkForUpdates(options?: { silent?: boolean }): Promise<U
     if (explicitCheck) {
       patchState({
         status: 'error',
-        message: error instanceof Error ? error.message : 'Update check failed',
+        message: formatUpdateError(
+          error instanceof Error ? error : new Error('Update check failed'),
+        ),
       });
     }
     explicitCheck = false;

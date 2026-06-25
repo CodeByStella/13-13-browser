@@ -1,6 +1,6 @@
 {
   "name": "13-13-browser",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "13.13 Browser — a desktop web browser with native screen-capture protection",
   "main": "dist-electron/main.js",
   "packageManager": "pnpm@10.12.1",
@@ -38,7 +38,8 @@
     "publish": {
       "provider": "github",
       "owner": "CodeByStella",
-      "repo": "13-13-browser"
+      "repo": "13-13-browser",
+      "private": true
     }
   },
   "dependencies": {
