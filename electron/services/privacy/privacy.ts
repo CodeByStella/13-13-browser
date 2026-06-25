@@ -3,6 +3,7 @@ import { BrowserWindow, session, type Session, type WebContents } from 'electron
 import { IPC_EVENTS } from '@shared/ipc/channels';
 import type { PrivacySettings, PrivacyStats } from '@shared/types';
 
+import { getAppContext } from '../../app/context';
 import {
   loadPrivacySettings,
   savePrivacySettings,
@@ -15,6 +16,7 @@ import {
   resolveSitePermission,
 } from '../permissions/site-permissions';
 import { initContentProtectionFromSettings, setContentProtectionPreference } from './content-protection';
+import { backupNewTabShortcutsBeforeClear } from '../newtab/newtab-shortcuts-sync';
 
 const TRACKER_DOMAINS = [
   'google-analytics.com',
@@ -94,6 +96,10 @@ function browserSessions(): Session[] {
 }
 
 export async function clearBrowsingData(): Promise<void> {
+  await backupNewTabShortcutsBeforeClear(
+    () => getAppContext().getTabManager()?.getNormalTabWebContents() ?? [],
+  );
+
   for (const sess of browserSessions()) {
     await sess.clearStorageData();
     await sess.clearCache();

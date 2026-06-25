@@ -2,8 +2,13 @@ import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
+export interface SessionTabEntry {
+  url: string;
+  pinned?: boolean;
+}
+
 export interface SessionData {
-  tabs: string[];
+  tabs: SessionTabEntry[] | string[];
   activeIndex: number;
 }
 
@@ -22,6 +27,17 @@ export function loadSession(): SessionData | null {
   } catch {
     return null;
   }
+}
+
+export function normalizeSessionEntries(tabs: SessionData['tabs']): SessionTabEntry[] {
+  if (tabs.length === 0) return [];
+  if (typeof tabs[0] === 'string') {
+    return (tabs as string[]).map((url) => ({ url, pinned: false }));
+  }
+  return (tabs as SessionTabEntry[]).map((entry) => ({
+    url: entry.url,
+    pinned: !!entry.pinned,
+  }));
 }
 
 export function saveSession(data: SessionData): void {

@@ -7,6 +7,7 @@ import {
   chromeMenuApi,
   privacyPanelApi,
   sitePermissionsApi,
+  tabPickerApi,
   traySettingsApi,
 } from './popup-apis';
 
@@ -17,5 +18,6 @@ contextBridge.exposeInMainWorld('privacyPanelApi', privacyPanelApi);
 contextBridge.exposeInMainWorld('sitePermissionsApi', sitePermissionsApi);
 contextBridge.exposeInMainWorld('aboutApi', aboutApi);
 contextBridge.exposeInMainWorld('traySettingsApi', traySettingsApi);
+contextBridge.exposeInMainWorld('tabPickerApi', tabPickerApi);
 
 export type { BrowserApi } from './browser-api';

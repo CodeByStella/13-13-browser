@@ -1,6 +1,6 @@
 {
   "name": "13-13-browser",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "13.13 Browser — a desktop web browser with native screen-capture protection",
   "main": "dist-electron/main.js",
   "packageManager": "pnpm@10.12.1",
@@ -34,16 +34,22 @@
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "CodeByStella",
+      "repo": "13-13-browser"
     }
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.3",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
-    "@types/node": "^22.15.3",
     "@vitejs/plugin-react": "^4.4.1",
     "electron": "^36.2.0",
     "electron-builder": "^26.0.12",

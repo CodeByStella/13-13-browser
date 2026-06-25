@@ -4,12 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Tab — 13.13 Browser</title>
-    <link rel="icon" type="image/svg+xml" href="/newtab-icon.svg" />
+    <link rel="icon" type="image/png" href="/newtab-icon.png" />
     <style>
       :root {
         color-scheme: dark;
         --bg-deep: #06080d;
         --surface: #111622;
+        --surface-raised: #171d2e;
         --border: rgba(61, 74, 110, 0.55);
         --text: #eef2ff;
         --muted: #8892b0;
@@ -173,44 +174,6 @@
       }
 
       .hero { text-align: center; }
-
-      .brand-row {
-        display: inline-flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 1.35rem;
-      }
-
-      .brand-mark {
-        font-size: clamp(2rem, 6vw, 2.85rem);
-        font-weight: 800;
-        letter-spacing: -0.04em;
-        line-height: 1;
-        color: var(--text);
-        text-shadow: 0 2px 16px rgba(91, 141, 239, 0.22);
-      }
-
-      .brand-mark .dot {
-        color: var(--accent);
-        text-shadow: 0 0 24px rgba(91, 141, 239, 0.45);
-      }
-
-      .brand-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(62, 207, 142, 0.35);
-        background: var(--privacy-soft);
-        color: var(--privacy);
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-      }
-
-      .brand-badge svg { width: 12px; height: 12px; fill: currentColor; }
 
       .greeting {
         font-size: clamp(1.85rem, 5vw, 2.65rem);
@@ -759,13 +722,6 @@
 
       <main class="shell">
         <header class="hero">
-          <div class="brand-row">
-            <div class="brand-mark">13<span class="dot">.13</span></div>
-            <div class="brand-badge">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5.5-3.5 9.5-8 10-4.5-.5-8-4.5-8-10V6l8-4z"/></svg>
-              Privacy-first
-            </div>
-          </div>
           <h1 class="greeting" id="greeting">Good evening</h1>
           <p class="date-line" id="date"></p>
         </header>
@@ -902,6 +858,11 @@
       function saveShortcuts() {
         localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(shortcuts));
       }
+
+      window.__syncNewTabShortcuts = function () {
+        shortcuts = loadShortcuts();
+        renderShortcuts();
+      };
 
       function createId() {
         return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);

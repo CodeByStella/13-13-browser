@@ -4,6 +4,7 @@ import { IPC, IPC_EVENTS } from '@shared/ipc/channels';
 import type { AboutInfo } from '@shared/types';
 
 import { POPUP_WEB_PREFERENCES, loadStaticPage, preloadPath } from './popup-utils';
+import { registerAboutUpdateTarget } from '../services/update/app-updater';
 
 let aboutWindow: BrowserWindow | null = null;
 let ipcRegistered = false;
@@ -40,7 +41,7 @@ export function showAboutWindow(parent: BrowserWindow, isDev: boolean): void {
   closeAboutWindow();
 
   const width = 360;
-  const height = 420;
+  const height = 480;
   const parentBounds = parent.getBounds();
   const x = Math.round(parentBounds.x + (parentBounds.width - width) / 2);
   const y = Math.round(parentBounds.y + (parentBounds.height - height) / 2);
@@ -71,6 +72,7 @@ export function showAboutWindow(parent: BrowserWindow, isDev: boolean): void {
   aboutWindow.setAlwaysOnTop(true, 'pop-up-menu');
 
   aboutWindow.webContents.on('did-finish-load', () => {
+    registerAboutUpdateTarget(aboutWindow!.webContents);
     aboutWindow?.webContents.send(IPC_EVENTS.ABOUT_DATA, aboutInfo());
   });
 

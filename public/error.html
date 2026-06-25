@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/chrome-theme.css" />
     <title>Page Not Available — 13.13 Browser</title>
     <link rel="icon" type="image/svg+xml" href="/error-icon.svg" />
     <style>
@@ -45,7 +46,7 @@
         inset: 0;
         z-index: 0;
         overflow: hidden;
-        background: linear-gradient(165deg, #120c14 0%, #0a0e18 42%, #040508 100%);
+        background: #2b2b2b;
       }
 
       .ambient-glow {
@@ -153,8 +154,8 @@
       .panel {
         border-radius: 20px;
         border: 1px solid rgba(61, 74, 110, 0.48);
-        background: linear-gradient(180deg, rgba(30, 38, 58, 0.78) 0%, rgba(12, 16, 26, 0.92) 100%);
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        background: var(--surface-raised);
+        box-shadow: none;
         overflow: hidden;
       }
 
@@ -212,7 +213,7 @@
         display: grid;
         place-items: center;
         color: var(--danger);
-        box-shadow: 0 10px 28px rgba(239, 107, 107, 0.14);
+        box-shadow: none;
       }
 
       .icon svg { width: 28px; height: 28px; }
@@ -345,7 +346,7 @@
         overflow: hidden;
         border: 1px solid rgba(61, 74, 110, 0.58);
         background: rgba(4, 6, 10, 0.9);
-        box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.38);
+        box-shadow: none;
       }
 
       .game-canvas-wrap canvas {
@@ -406,6 +407,24 @@
         font-size: 0.66rem;
         color: #6b7594;
         text-align: center;
+      }
+
+      body.game-only .layout {
+        grid-template-columns: 1fr;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+
+      body.game-only .error-panel {
+        display: none;
+      }
+
+      body.game-only .game-panel {
+        padding: 1.5rem;
+      }
+
+      body.game-only .game-head p {
+        color: var(--muted);
       }
     </style>
   </head>
@@ -482,8 +501,14 @@
 
     <script>
       const params = new URLSearchParams(location.search);
+      const gameOnly = params.get('mode') === 'game';
       const failedUrl = decodeURIComponent(params.get('url') || '').trim();
       const code = params.get('code') || '';
+
+      if (gameOnly) {
+        document.body.classList.add('game-only');
+        document.title = 'Pixel Snake — 13.13 Browser';
+      }
 
       const ERROR_MESSAGES = {
         '-105': { title: "This site can't be reached", message: "The server couldn't be found. Check the address for typos." },
@@ -497,26 +522,29 @@
       };
 
       const known = code ? ERROR_MESSAGES[code] : null;
-      if (known) {
+      if (known && !gameOnly) {
         document.getElementById('error-title').textContent = known.title;
         document.getElementById('message').textContent = known.message;
       }
 
-      if (code) {
+      if (code && !gameOnly) {
         const badge = document.getElementById('error-code');
         badge.classList.remove('hidden');
         badge.textContent = 'Error ' + code;
       }
 
       const urlEl = document.getElementById('url-display');
-      if (failedUrl) {
-        urlEl.textContent = failedUrl;
-      } else {
-        urlEl.textContent = 'Address unavailable';
-        urlEl.classList.add('empty');
+      if (!gameOnly) {
+        if (failedUrl) {
+          urlEl.textContent = failedUrl;
+        } else {
+          urlEl.textContent = 'Address unavailable';
+          urlEl.classList.add('empty');
+        }
       }
 
       document.getElementById('retry-btn').addEventListener('click', () => {
+        if (gameOnly) return;
         if (failedUrl) {
           window.location.href = failedUrl;
           return;
@@ -667,11 +695,17 @@
           }
           updateBest();
           const bestNote = score >= bestScore && score > 0 ? ' · New best!' : '';
-          overlayTitle.textContent = score > 0
-            ? 'Game over · Score ' + score + bestNote
-            : 'Game over';
+          if (overlayTitle) {
+            overlayTitle.textContent = score > 0
+              ? 'Game over · Score ' + score + bestNote
+              : 'Game over';
+          }
           startBtn.textContent = 'Play again';
           overlay.classList.remove('hidden');
+        }
+
+        if (overlayTitle) {
+          overlayTitle.textContent = gameOnly ? 'Pixel Snake' : 'Site unreachable?';
         }
 
         function handleDirection(key) {

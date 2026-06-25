@@ -1,6 +1,7 @@
-import { ipcMain } from 'electron';
+import { ipcMain, Menu } from 'electron';
 
 import { IPC } from '@shared/ipc/channels';
+import type { ChromePopupAnchor } from '@shared/types';
 
 import { getAppContext } from '../app/context';
 import { setChromeHeight } from '../lib/shared';
@@ -38,6 +39,39 @@ export function registerTabsIpc(): void {
     getAppContext().getTabManager()?.duplicateTab(id),
   );
   ipcMain.handle(IPC.REOPEN_CLOSED_TAB, () => getAppContext().getTabManager()?.reopenClosedTab());
+  ipcMain.handle(IPC.TOGGLE_PIN_TAB, (_event, id: string) =>
+    getAppContext().getTabManager()?.togglePinTab(id),
+  );
+  ipcMain.handle(
+    IPC.SHOW_TAB_CONTEXT_MENU,
+    (_event, tabId: string, anchor: ChromePopupAnchor) => {
+      const mainWindow = getAppContext().getMainWindow();
+      const tabManager = getAppContext().getTabManager();
+      if (!mainWindow || !tabManager) return;
+
+      const tab = tabManager.getState().tabs.find((entry) => entry.id === tabId);
+      if (!tab) return;
+
+      const menu = Menu.buildFromTemplate([
+        {
+          label: tab.isPinned ? 'Unpin tab' : 'Pin tab',
+          enabled: !tab.isPrivate,
+          click: () => tabManager.togglePinTab(tabId),
+        },
+        { type: 'separator' },
+        {
+          label: 'Close tab',
+          click: () => tabManager.closeTab(tabId),
+        },
+      ]);
+
+      menu.popup({
+        window: mainWindow,
+        x: Math.round(anchor.x),
+        y: Math.round(anchor.y),
+      });
+    },
+  );
 
   ipcMain.handle(IPC.ZOOM_IN, () => getAppContext().getTabManager()?.zoomIn() ?? 1);
   ipcMain.handle(IPC.ZOOM_OUT, () => getAppContext().getTabManager()?.zoomOut() ?? 1);

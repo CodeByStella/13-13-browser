@@ -44,3 +44,14 @@ export interface AboutInfo {
   repository: string;
   license: string;
 }
+
+export interface TabPickerItemPayload {
+  id: string;
+  title: string;
+  url: string;
+  favicon?: string;
+  isLoading: boolean;
+  isActive: boolean;
+  isPrivate: boolean;
+  isPinned?: boolean;
+}

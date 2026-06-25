@@ -27,39 +27,49 @@ export function TabBar({
   onCloseWindow,
 }: TabBarProps) {
   const activeTabId = tabs.find((tab) => tab.isActive)?.id ?? null;
-  const { scrollRef, stripRef, isCompact, needsOverflow } = useTabStripLayout(tabs.length, activeTabId);
-  const [overflowOpen, setOverflowOpen] = useState(false);
-  const overflowRef = useRef<HTMLDivElement>(null);
+  const { scrollRef, stripRef, isCompact } = useTabStripLayout(tabs, activeTabId);
+  const [tabPickerOpen, setTabPickerOpen] = useState(false);
+  const tabSearchBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!overflowOpen) return;
+    const unsub = window.browserApi.onTabPickerClosed(() => setTabPickerOpen(false));
+    return unsub;
+  }, []);
 
-    const onPointerDown = (event: MouseEvent): void => {
-      if (!overflowRef.current?.contains(event.target as Node)) {
-        setOverflowOpen(false);
-      }
-    };
+  const openTabPicker = (): void => {
+    const button = tabSearchBtnRef.current;
+    if (!button) return;
 
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') setOverflowOpen(false);
-    };
-
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [overflowOpen]);
+    const rect = button.getBoundingClientRect();
+    void window.browserApi
+      .showTabPicker(
+        {
+          x: Math.round(rect.left),
+          y: Math.round(rect.bottom + 2),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        },
+        true,
+      )
+      .then(setTabPickerOpen);
+  };
 
   return (
     <div className="tab-bar titlebar-drag">
-      <div className="tab-bar-logo titlebar-drag">
-        <div className="brand-logo">
-          <span className="brand-mark">13</span>
-          <span className="brand-dot">.</span>
-          <span className="brand-mark accent">13</span>
-        </div>
+      <div className="tab-search-wrap titlebar-no-drag">
+        <button
+          ref={tabSearchBtnRef}
+          type="button"
+          className={`tab-search-btn ${tabPickerOpen ? 'open' : ''}`}
+          aria-label="Search tabs"
+          aria-expanded={tabPickerOpen}
+          title="Search tabs"
+          onClick={openTabPicker}
+        >
+          <svg viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       </div>
 
       <div className="tab-strip titlebar-drag" ref={stripRef}>
@@ -75,8 +85,16 @@ export function TabBar({
                 data-tab-id={tab.id}
                 role="tab"
                 aria-selected={tab.isActive}
-                className={`tab ${tab.isActive ? 'active' : ''} ${tab.isLoading ? 'loading' : ''} ${tab.isPrivate ? 'private' : ''} ${isCompact ? 'compact' : ''} titlebar-no-drag`}
+                className={`tab ${tab.isActive ? 'active' : ''} ${tab.isLoading ? 'loading' : ''} ${tab.isPrivate ? 'private' : ''} ${tab.isPinned ? 'pinned' : ''} ${!tab.isPinned && isCompact ? 'compact' : ''} titlebar-no-drag`}
                 onClick={() => onSwitchTab(tab.id)}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  void window.browserApi.showTabContextMenu(tab.id, {
+                    x: event.clientX,
+                    y: event.clientY,
+                    width: 0,
+                  });
+                }}
                 onMouseDown={(event) => {
                   if (event.button === 1) {
                     event.preventDefault();
@@ -85,6 +103,12 @@ export function TabBar({
                 }}
                 title={tab.title}
               >
+                {tab.isActive && (
+                  <>
+                    <span className="tab-curve tab-curve-left" aria-hidden="true" />
+                    <span className="tab-curve tab-curve-right" aria-hidden="true" />
+                  </>
+                )}
                 <span className="tab-favicon">
                   {tab.isPrivate ? (
                     <IconPrivate className="tab-private-icon" />
@@ -120,55 +144,6 @@ export function TabBar({
             </button>
           </div>
         </div>
-
-        {needsOverflow && (
-          <div className="tab-overflow-wrap titlebar-no-drag" ref={overflowRef}>
-            <button
-              type="button"
-              className={`tab-overflow-btn ${overflowOpen ? 'open' : ''}`}
-              aria-label="All tabs"
-              aria-expanded={overflowOpen}
-              title={`All tabs (${tabs.length})`}
-              onClick={() => setOverflowOpen((open) => !open)}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-              </svg>
-              <span className="tab-overflow-count">{tabs.length}</span>
-            </button>
-
-            {overflowOpen && (
-              <div className="tab-overflow-menu" role="menu">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="menuitem"
-                    className={`tab-overflow-item ${tab.isActive ? 'active' : ''}`}
-                    onClick={() => {
-                      onSwitchTab(tab.id);
-                      setOverflowOpen(false);
-                    }}
-                  >
-                    <span className="tab-overflow-favicon">
-                      {tab.isPrivate ? (
-                        <IconPrivate className="tab-private-icon" />
-                      ) : tab.favicon ? (
-                        <img src={tab.favicon} alt="" />
-                      ) : (
-                        <IconShield active className="tab-guard-icon" />
-                      )}
-                    </span>
-                    <span className="tab-overflow-label">
-                      {tab.isPrivate ? `Private · ${tab.title}` : tab.title}
-                    </span>
-                    {tab.isLoading && <span className="tab-overflow-loading" aria-hidden="true" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
       </div>
 

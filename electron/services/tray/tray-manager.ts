@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Menu, Tray } from 'electron';
 
-import { APP_DISPLAY_NAME, resolveAppIcon } from '../../lib/app-branding';
+import { APP_DISPLAY_NAME, resolveAppIconImage } from '../../lib/app-branding';
 import { getAppSettings } from '../app-settings/app-settings';
 import { closePrivacyPanel } from '../../windows/privacy-panel-window';
 import { closeSitePermissionsPanel } from '../../windows/site-permissions-window';
@@ -24,15 +24,15 @@ export function markAppQuitting(): void {
 
 export function initTray(window: BrowserWindow): void {
   mainWindow = window;
-  const iconPath = resolveAppIcon();
-  if (!iconPath) return;
+  const icon = resolveAppIconImage();
+  if (!icon) return;
 
   if (tray) {
     tray.destroy();
     tray = null;
   }
 
-  tray = new Tray(iconPath);
+  tray = new Tray(icon);
   tray.setToolTip(APP_DISPLAY_NAME);
   rebuildTrayMenu();
 
