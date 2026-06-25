@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-06-25
+
+### Fixed
+
+- **Site compatibility (Chrome 137+ gates)** — report Chrome major version 137 in the user agent and Client Hints while Electron 36 still ships Chromium 136; sync `navigator.userAgent` in-page so version checks match request headers. v1.0.0 and v2.0.0 used the same engine; the regression on 2.0.0 was mainly the default Electron UA appending `13.13 Browser/2.0.0`, which some sites misread as browser version `2` instead of the real `Chrome/136` token
+
+## [2.0.2] - 2026-06-25
+
+### Fixed
+
+- **Site compatibility (follow-up)** — align `Sec-CH-UA` request headers with the Chrome user agent, disable client-hint fingerprint mismatches, and inject standard `window.chrome` / `navigator.webdriver` shims before page scripts run
+
 ## [2.0.1] - 2026-06-25
 
 ### Fixed

@@ -17,7 +17,7 @@ import {
 } from '../permissions/site-permissions';
 import { initContentProtectionFromSettings, setContentProtectionPreference } from './content-protection';
 import { backupNewTabShortcutsBeforeClear } from '../newtab/newtab-shortcuts-sync';
-import { applySessionUserAgent } from '../../lib/browser-user-agent';
+import { applySessionUserAgent, patchBrowserRequestHeaders } from '../../lib/browser-user-agent';
 
 const TRACKER_DOMAINS = [
   'google-analytics.com',
@@ -146,11 +146,11 @@ function setupSession(sess: Session): void {
   });
 
   sess.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
-    const headers = { ...details.requestHeaders };
+    const headers = patchBrowserRequestHeaders({ ...details.requestHeaders });
     if (settings.sendDoNotTrack) {
       headers.DNT = '1';
     }
-    callback({ requestHeaders: headers });
+    callback({ requestHeaders: headers as Record<string, string> });
   });
 
   sess.setPermissionRequestHandler((_webContents, permission, callback, details) => {

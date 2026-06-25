@@ -21,6 +21,7 @@ import { saveSession, normalizeSessionEntries, type SessionData } from '../../st
 import { attachPrivacySession } from '../privacy/privacy';
 import { attachKeyboardShortcuts } from '../../lib/keyboard-shortcuts';
 import { brandDevToolsWindows, DEVTOOLS_WINDOW_TITLE } from '../../lib/app-branding';
+import { installWebContentsCompat } from '../../lib/browser-user-agent';
 import {
   isNewTabPageUrl,
   persistShortcutsFromWebContents,
@@ -537,6 +538,7 @@ export class TabManager {
   private attachViewEvents(id: string, view: BrowserView): void {
     const wc = view.webContents;
 
+    installWebContentsCompat(wc);
     attachKeyboardShortcuts(wc);
 
     wc.setWindowOpenHandler(({ url }) => {
