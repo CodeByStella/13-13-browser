@@ -1,23 +1,26 @@
 import { app, session, type Session, type WebContents } from 'electron';
 
 /**
- * Sites increasingly gate on Chrome 137+ while Electron 36 ships Chromium 136.
- * v1.0.0 and v2.0.0 both used the same engine; v2 only changed the app token in
- * the default Electron UA (`Google Chrome/2.0.0`), which some detectors treat as
- * the browser version (2 < 137). We report at least this major in UA + Client Hints.
+ * Strip Electron / app-package tokens from Chromium's native UA.
+ * Prefer sanitizing the real engine UA over inventing one — Client Hints stay
+ * aligned with the shipped Chromium build.
  */
-const MIN_REPORTED_CHROME_MAJOR = 137;
-
-function effectiveChromeVersion(): string {
-  const actual = process.versions.chrome;
-  const [major, ...rest] = actual.split('.');
-  const majorNum = Number.parseInt(major ?? '0', 10);
-  if (majorNum >= MIN_REPORTED_CHROME_MAJOR) return actual;
-  return [String(MIN_REPORTED_CHROME_MAJOR), ...rest].join('.');
+export function sanitizeChromeUserAgent(ua: string): string {
+  return ua
+    .replace(/\sElectron\/\S+/gi, '')
+    .replace(/\sGoogle Chrome\/\S+/gi, '')
+    .replace(/\sgoogle-chrome\/\S+/gi, '')
+    .replace(/\s+Safari\//i, ' Safari/')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
-function chromeMajorVersion(): string {
-  return effectiveChromeVersion().split('.')[0] ?? String(MIN_REPORTED_CHROME_MAJOR);
+function resolveCleanUserAgent(sess?: Session): string {
+  const source =
+    sess?.getUserAgent() ||
+    app.userAgentFallback ||
+    `Mozilla/5.0 (${platformToken()}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
+  return sanitizeChromeUserAgent(source);
 }
 
 function platformToken(): string {
@@ -26,121 +29,50 @@ function platformToken(): string {
   return 'X11; Linux x86_64';
 }
 
-function platformClientHint(): string {
-  if (process.platform === 'win32') return '"Windows"';
-  if (process.platform === 'darwin') return '"macOS"';
-  return '"Linux"';
-}
-
-function escapeForInjectedScript(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-}
-
-function buildCompatInjectScript(): string {
-  const ua = escapeForInjectedScript(buildChromeUserAgent());
-
-  return `(() => {
-  const ua = '${ua}';
-  try {
-    Object.defineProperty(navigator, 'userAgent', { get: () => ua, configurable: true });
-    const appVersion = ua.startsWith('Mozilla/') ? ua.slice(8) : ua;
-    Object.defineProperty(navigator, 'appVersion', { get: () => appVersion, configurable: true });
-  } catch (_) {}
-
-  try {
-    if (navigator.webdriver) {
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-    }
-  } catch (_) {}
-
-  if (!window.chrome) {
-    window.chrome = {
-      runtime: {},
-      loadTimes: function () { return {}; },
-      csi: function () { return {}; },
-    };
-  }
-})();`;
-}
-
 /** Chrome-like UA without Electron / app package tokens. */
 export function buildChromeUserAgent(): string {
-  const chromeVersion = effectiveChromeVersion();
-  return `Mozilla/5.0 (${platformToken()}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
+  return resolveCleanUserAgent();
 }
 
-/** Align request headers with the spoofed Chrome user agent. */
+/**
+ * Keep the network User-Agent aligned with the session UA.
+ * Do not forge Sec-CH-UA* — Chromium must emit Client Hints that match the
+ * real engine version.
+ */
 export function patchBrowserRequestHeaders(
   headers: Record<string, string | string[] | undefined>,
 ): Record<string, string | string[] | undefined> {
-  const major = chromeMajorVersion();
-  const next: Record<string, string | string[] | undefined> = { ...headers };
-
-  next['User-Agent'] = buildChromeUserAgent();
-  next['Sec-CH-UA'] = `"Chromium";v="${major}", "Google Chrome";v="${major}", "Not.A/Brand";v="99"`;
-  next['Sec-CH-UA-Mobile'] = '?0';
-  next['Sec-CH-UA-Platform'] = platformClientHint();
-
-  delete next['Sec-CH-UA-Full-Version'];
-  delete next['Sec-CH-UA-Full-Version-List'];
-
-  return next;
+  return {
+    ...headers,
+    'User-Agent': buildChromeUserAgent(),
+  };
 }
 
 export function applySessionUserAgent(sess: Session): void {
-  const ua = buildChromeUserAgent();
+  const ua = resolveCleanUserAgent(sess);
   if (sess.getUserAgent() !== ua) {
     sess.setUserAgent(ua);
   }
 }
 
-/** Call before app.ready — sets fallback UA and Chromium switches. */
+/** Call before app.ready — Chromium switches only (UA applied on ready). */
 export function initBrowserUserAgent(): void {
-  app.commandLine.appendSwitch('disable-features', 'UserAgentClientHint');
+  // Hide the automation-controlled flag without disabling native Client Hints.
   app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
-  app.userAgentFallback = buildChromeUserAgent();
 }
 
-/** Apply to the default session once app is ready. */
+/** Apply to default + browsing sessions once app is ready. */
 export function applyDefaultSessionUserAgent(): void {
+  const clean = sanitizeChromeUserAgent(session.defaultSession.getUserAgent());
+  app.userAgentFallback = clean;
   applySessionUserAgent(session.defaultSession);
+  applySessionUserAgent(session.fromPartition('persist:browser'));
 }
 
-const compatInstalled = new WeakSet<WebContents>();
-
-/** Inject chrome / webdriver shims before page scripts run. */
-export function installWebContentsCompat(webContents: WebContents): void {
-  if (compatInstalled.has(webContents)) return;
-  compatInstalled.add(webContents);
-
-  webContents.once('destroyed', () => {
-    compatInstalled.delete(webContents);
-  });
-
-  const run = (): void => {
-    if (webContents.isDestroyed()) return;
-
-    const source = buildCompatInjectScript();
-    const dbg = webContents.debugger;
-    if (dbg.isAttached()) return;
-
-    try {
-      dbg.attach('1.3');
-      void dbg
-        .sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-          source,
-        })
-        .finally(() => {
-          if (!webContents.isDestroyed() && dbg.isAttached()) {
-            dbg.detach();
-          }
-        });
-    } catch {
-      void webContents.executeJavaScript(source, true).catch(() => undefined);
-    }
-  };
-
-  webContents.on('did-start-navigation', (_event, _url, _inPlace, isMainFrame) => {
-    if (isMainFrame) run();
-  });
+/**
+ * Kept for call sites. Identity is applied via sanitized session UA + native
+ * Client Hints. CDP injection is intentionally not used (automation signal).
+ */
+export function installWebContentsCompat(_webContents: WebContents): void {
+  // no-op
 }

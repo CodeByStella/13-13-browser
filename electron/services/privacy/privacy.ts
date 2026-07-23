@@ -45,6 +45,23 @@ const TRACKER_DOMAINS = [
   'clarity.ms',
 ];
 
+function isGoogleAuthUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return (
+      host === 'accounts.google.com' ||
+      host === 'account.google.com' ||
+      host.endsWith('.google.com') &&
+        (host.startsWith('accounts.') ||
+          host.startsWith('oauth.') ||
+          host.includes('gstatic') ||
+          host.includes('googleapis'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 const configuredSessions = new WeakSet<Session>();
 
 let settings = loadPrivacySettings();
@@ -147,7 +164,9 @@ function setupSession(sess: Session): void {
 
   sess.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
     const headers = patchBrowserRequestHeaders({ ...details.requestHeaders });
-    if (settings.sendDoNotTrack) {
+    // Do not advertise DNT on Google account / auth hosts — some Google flows
+    // treat unusual privacy headers as a non-Chrome client signal.
+    if (settings.sendDoNotTrack && !isGoogleAuthUrl(details.url)) {
       headers.DNT = '1';
     }
     callback({ requestHeaders: headers as Record<string, string> });

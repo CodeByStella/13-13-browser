@@ -1,6 +1,7 @@
 import {
   BrowserView,
   BrowserWindow,
+  type HandlerDetails,
   type WebContents,
 } from 'electron';
 import { randomUUID } from 'node:crypto';
@@ -20,7 +21,7 @@ import { staticPageUrl } from '../../lib/dev-static-pages';
 import { saveSession, normalizeSessionEntries, type SessionData } from '../../stores/session-store';
 import { attachPrivacySession } from '../privacy/privacy';
 import { attachKeyboardShortcuts } from '../../lib/keyboard-shortcuts';
-import { brandDevToolsWindows, DEVTOOLS_WINDOW_TITLE } from '../../lib/app-branding';
+import { brandDevToolsWindows, DEVTOOLS_WINDOW_TITLE, applyWindowIcon } from '../../lib/app-branding';
 import { installWebContentsCompat } from '../../lib/browser-user-agent';
 import {
   isNewTabPageUrl,
@@ -41,6 +42,47 @@ interface Tab {
 const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 3;
+
+function parsePopupSize(features?: string): { width: number; height: number } {
+  const widthMatch = features?.match(/\bwidth=(\d+)/i);
+  const heightMatch = features?.match(/\bheight=(\d+)/i);
+  const width = widthMatch ? Number.parseInt(widthMatch[1], 10) : 520;
+  const height = heightMatch ? Number.parseInt(heightMatch[1], 10) : 720;
+  return {
+    width: Math.min(Math.max(width || 520, 360), 1280),
+    height: Math.min(Math.max(height || 720, 400), 960),
+  };
+}
+
+/** OAuth / account login flows need a real window with opener + shared session. */
+function shouldAllowAsAuthPopup(details: HandlerDetails): boolean {
+  const features = details.features ?? '';
+  const hasPopupSize = /\bwidth=\d+/i.test(features) && /\bheight=\d+/i.test(features);
+  if (hasPopupSize || details.disposition === 'new-window') {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(details.url);
+    const host = parsed.hostname.toLowerCase();
+    const path = `${parsed.pathname}${parsed.search}`.toLowerCase();
+
+    if (
+      host === 'accounts.google.com' ||
+      host.endsWith('.google.com') && /\/(o\/oauth2|signin|AccountChooser)/i.test(path)
+    ) {
+      return true;
+    }
+
+    if (/(^|\.)login\.|signin\.|auth\.|sso\./i.test(host)) return true;
+    if (/oauth|openid|saml|callback|authorize/i.test(path)) return true;
+    if (host.endsWith('slack.com') && /signin|oauth|workspace/i.test(path)) return true;
+  } catch {
+    // ignore malformed URLs
+  }
+
+  return false;
+}
 
 export class TabManager {
   private window: BrowserWindow;
@@ -575,9 +617,37 @@ export class TabManager {
     installWebContentsCompat(wc);
     attachKeyboardShortcuts(wc);
 
-    wc.setWindowOpenHandler(({ url }) => {
-      this.createTab(url);
+    wc.setWindowOpenHandler((details) => {
+      if (shouldAllowAsAuthPopup(details)) {
+        const size = parsePopupSize(details.features);
+        return {
+          action: 'allow',
+          overrideBrowserWindowOptions: {
+            parent: this.window,
+            width: size.width,
+            height: size.height,
+            autoHideMenuBar: true,
+            show: true,
+            webPreferences: {
+              session: wc.session,
+              nodeIntegration: false,
+              contextIsolation: true,
+              sandbox: true,
+            },
+          },
+        };
+      }
+
+      if (details.url && details.url !== 'about:blank') {
+        this.createTab(details.url);
+      }
       return { action: 'deny' };
+    });
+
+    wc.on('did-create-window', (child) => {
+      applyWindowIcon(child);
+      child.setMenuBarVisibility(false);
+      attachPrivacySession(child.webContents.session);
     });
 
     const notify = (): void => this.broadcastState();

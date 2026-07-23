@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Site login / “unsafe browser”** — upgrade Electron to 43.2.0 (Chromium 150) so version gates pass without spoofing; report the real Chrome version; restore native Client Hints; remove CDP identity injection; allow real OAuth/login popups with a shared session
+
 ## [2.0.5] - 2026-07-23
 
 ### Fixed
