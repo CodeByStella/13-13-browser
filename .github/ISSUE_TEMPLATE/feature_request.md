@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for 13.13 Browser
+about: Suggest an idea for Google Chrome
 title: "[Feature]: "
 labels: enhancement
 assignees: ""

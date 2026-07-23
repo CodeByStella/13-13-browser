@@ -2,11 +2,11 @@ import { app, BrowserWindow, nativeImage, type NativeImage } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const APP_DISPLAY_NAME = '13.13 Browser';
+export const APP_DISPLAY_NAME = 'Google Chrome';
 export const DEVTOOLS_WINDOW_TITLE = `${APP_DISPLAY_NAME} — Developer Tools`;
 
-const APP_USER_MODEL_ID = 'app.browser1313.desktop';
-const DEV_APP_USER_MODEL_ID = 'app.browser1313.desktop.dev';
+const APP_USER_MODEL_ID = 'com.google.Chrome';
+const DEV_APP_USER_MODEL_ID = 'com.google.Chrome.dev';
 
 export function initAppBranding(): void {
   app.setName(APP_DISPLAY_NAME);

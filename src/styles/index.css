@@ -386,6 +386,20 @@ button, input { font: inherit; }
   border-radius: var(--tab-top) var(--tab-top) 0 0 / calc(var(--tab-top) * 1.2) calc(var(--tab-top) * 1.2) 0 0;
 }
 
+.tab-bar.is-reordering {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.tab-bar.is-reordering .tab {
+  cursor: grabbing;
+}
+
+.tab.dragging {
+  opacity: 0.55;
+  z-index: 3;
+}
+
 .tab.active {
   border: none;
   border-radius: var(--tab-top) var(--tab-top) 0 0 / calc(var(--tab-top) * 1.2) calc(var(--tab-top) * 1.2) 0 0;
@@ -538,25 +552,6 @@ button, input { font: inherit; }
 
 .tab.pinned .tab-title {
   display: none;
-}
-
-.tab.pinned .tab-close {
-  display: none;
-}
-
-.tab.pinned:hover .tab-favicon {
-  visibility: hidden;
-}
-
-.tab.pinned:hover .tab-close {
-  display: grid;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 2;
-  transform: translate(-50%, -50%);
-  opacity: 0.85;
-  background: var(--surface-active);
 }
 
 .tab-overflow-wrap {

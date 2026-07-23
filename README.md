@@ -1,4 +1,4 @@
-# 13.13 Browser
+# Google Chrome
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue)](./CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-Proprietary-lightgrey)](./LICENSE)
@@ -46,9 +46,9 @@ A privacy-focused desktop web browser built with Electron, TypeScript, React, an
 
 ## Overview
 
-13.13 Browser combines a modern **3D-depth UI** with OS-level privacy features. Web pages render in isolated `BrowserView` instances behind a custom React chrome layer. The browser shell handles tabs, navigation, bookmarks, find-in-page, zoom, and a live privacy dashboard — while each tab loads web content in its own sandboxed view.
+Google Chrome combines a modern **3D-depth UI** with OS-level privacy features. Web pages render in isolated `BrowserView` instances behind a custom React chrome layer. The browser shell handles tabs, navigation, bookmarks, find-in-page, zoom, and a live privacy dashboard — while each tab loads web content in its own sandboxed view.
 
-The UI uses a dark theme with raised/inset surfaces, a **13.13** brand mark in the tab bar, custom window controls (minimize / maximize / close), and purple-accented private browsing indicators.
+The UI uses a dark theme with raised/inset surfaces, a **Google Chrome** brand mark in the tab bar, custom window controls (minimize / maximize / close), and purple-accented private browsing indicators.
 
 ---
 
@@ -63,7 +63,7 @@ The UI uses a dark theme with raised/inset surfaces, a **13.13** brand mark in t
 
 ### Tab bar
 
-- **13.13 logo** on the far left.
+- **Google Chrome** logo on the far left.
 - Scrollable tab strip with 3D-styled tabs (subtle depth on inactive tabs, stronger depth on the active tab).
 - Each tab shows a favicon, title, and close button (visible on hover or when active).
 - **Middle-click** a tab to close it.
@@ -154,7 +154,7 @@ Opens the local **new tab page** (`newtab.html`), not an external site.
 
 ### New tab page
 
-Branded **13.13** page with:
+Branded **Google Chrome** page with:
 
 - DuckDuckGo search box (also accepts URLs)
 - Quick links: DuckDuckGo, GitHub, Proton, MDN
@@ -357,7 +357,7 @@ Create a Windows installer locally:
 pnpm dist
 ```
 
-Output lands in `release/` (for example `13.13 Browser Setup 1.0.0.exe`). The `release/` folder is gitignored.
+Output lands in `release/` (for example `Google Chrome Setup 1.0.0.exe`). The `release/` folder is gitignored.
 
 Place app icons at `build/icon.png` and `build/icon.ico` (used for the window, taskbar, and installer).
 
@@ -386,7 +386,7 @@ Workflow file: [`.github/workflows/release.yml`](./.github/workflows/release.yml
 
 The workflow runs on `windows-latest`, executes `pnpm install` and `pnpm run dist:ci` (build only — no electron-builder publish), then attaches these files to the release:
 
-- `13.13 Browser Setup x.y.z.exe` — NSIS installer
+- `Google Chrome Setup x.y.z.exe` — NSIS installer
 - `*.blockmap` — update metadata for electron-updater (future use)
 - `latest.yml` — update metadata for electron-updater (future use)
 
@@ -441,7 +441,7 @@ build/
 
 ## License
 
-Copyright © 2026 13.13 Browser. All rights reserved.
+Copyright © 2026 Google Chrome. All rights reserved.
 
 See [LICENSE](./LICENSE) for terms.  
 See [docs/PRIVACY_POLICY.md](./docs/PRIVACY_POLICY.md) for data handling practices.

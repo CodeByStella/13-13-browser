@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with 13.13 Browser
+about: Report a problem with Google Chrome
 title: "[Bug]: "
 labels: bug
 assignees: ""
@@ -26,7 +26,7 @@ What actually happened.
 
 ## Environment
 
-- **13.13 Browser version:** (e.g. 1.0.0)
+- **Google Chrome version:** (e.g. 1.0.0)
 - **OS:** (e.g. Windows 10 22H2)
 - **Install method:** (e.g. dev / installer)
 

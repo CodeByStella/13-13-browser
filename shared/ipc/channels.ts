@@ -14,6 +14,7 @@ export const IPC = {
   DUPLICATE_TAB: 'duplicate-tab',
   REOPEN_CLOSED_TAB: 'reopen-closed-tab',
   TOGGLE_PIN_TAB: 'toggle-pin-tab',
+  MOVE_TAB: 'move-tab',
   SHOW_TAB_CONTEXT_MENU: 'show-tab-context-menu',
   ZOOM_IN: 'zoom-in',
   ZOOM_OUT: 'zoom-out',

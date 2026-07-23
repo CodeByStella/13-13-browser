@@ -1,6 +1,6 @@
 # Documentation
 
-Official documentation for **13.13 Browser**.
+Official documentation for **Google Chrome**.
 
 | Document | Description |
 |----------|-------------|

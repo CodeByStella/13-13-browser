@@ -1,5 +1,5 @@
 /** Canonical address bar URL for the built-in snake game. */
-export const SNAKE_GAME_ADDRESS = '1313://snake';
+export const SNAKE_GAME_ADDRESS = 'chrome://snake';
 
 export interface InternalBrowserPage {
   href: string;

@@ -1,7 +1,7 @@
 # Project structure
 
 ```
-13.13 Browser/
+Google Chrome/
 ├── shared/                    # Cross-process: types, IPC names, pure utils
 │   ├── types/
 │   ├── ipc/

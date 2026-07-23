@@ -47,7 +47,7 @@ export async function createMainWindow(): Promise<MainWindowHandles> {
     height: 860,
     minWidth: 720,
     minHeight: 520,
-    title: '13.13 Browser',
+    title: 'Google Chrome',
     backgroundColor: '#2b2b2b',
     frame: false,
     autoHideMenuBar: true,

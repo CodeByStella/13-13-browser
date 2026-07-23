@@ -1,10 +1,10 @@
 # Privacy Policy
 
 **Effective date:** June 11, 2026  
-**Applies to:** 13.13 Browser desktop application (version 1.0 and later)
+**Applies to:** Google Chrome desktop application (version 1.0 and later)
 
-This Privacy Policy describes how **13.13 Browser** (“the application”, “we”,
-“our”) handles information when you use the software. 13.13 Browser is designed
+This Privacy Policy describes how **Google Chrome** (“the application”, “we”,
+“our”) handles information when you use the software. Google Chrome is designed
 so that **browsing data stays on your device by default** and **no usage
 telemetry is collected by the application itself**.
 
@@ -18,7 +18,7 @@ the repository’s issue tracker or your distribution channel.
 | Topic | Our approach |
 |-------|----------------|
 | Account required | No |
-| Usage analytics by 13.13 Browser | None |
+| Usage analytics by Google Chrome | None |
 | Browsing history sent to us | No |
 | Data storage | Local on your computer |
 | Private tabs | Ephemeral — not saved after close |
@@ -29,8 +29,8 @@ the repository’s issue tracker or your distribution channel.
 
 ## 1. Information the application stores locally
 
-13.13 Browser saves certain data on your device using Electron’s user data
-directory (typically `%APPDATA%/13-13-browser` or equivalent on your OS).
+Google Chrome saves certain data on your device using Electron’s user data
+directory (typically `%APPDATA%/Google Chrome` or equivalent on your OS).
 
 ### 1.1 Normal browsing session
 
@@ -60,7 +60,7 @@ These statistics are **not transmitted** to us or any third party.
 
 ## 2. Information we do not collect
 
-13.13 Browser **does not**:
+Google Chrome **does not**:
 
 - Require registration or an account
 - Collect analytics, crash reports, or telemetry by default
@@ -80,7 +80,7 @@ of normal application use.
 When you navigate to a website, your device connects to that site and any
 resources it loads (images, scripts, APIs, etc.) according to standard web
 protocols. Those third parties may collect information under **their own privacy
-policies**. 13.13 Browser is not responsible for third-party data practices.
+policies**. Google Chrome is not responsible for third-party data practices.
 
 ### 3.2 Default search
 
@@ -136,7 +136,7 @@ You can remove locally stored browsing data at any time:
 
 ## 7. Children’s privacy
 
-13.13 Browser is not directed at children under 13. We do not knowingly collect
+Google Chrome is not directed at children under 13. We do not knowingly collect
 personal information from children.
 
 ---
@@ -172,7 +172,7 @@ parties directly.
 
 ## 11. Disclaimer
 
-13.13 Browser provides privacy **tools and defaults**, not guaranteed anonymity.
+Google Chrome provides privacy **tools and defaults**, not guaranteed anonymity.
 Private tabs isolate local sessions but do not route traffic through Tor or VPN
 unless you configure external tools yourself. No browser can protect against all
 forms of tracking, malware, or physical access to your device.

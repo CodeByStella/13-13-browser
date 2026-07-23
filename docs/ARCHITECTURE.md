@@ -1,11 +1,11 @@
 # Architecture
 
-This document describes the high-level architecture of 13.13 Browser for
+This document describes the high-level architecture of Google Chrome for
 contributors and security reviewers.
 
 ## Overview
 
-13.13 Browser is an Electron desktop application with two distinct rendering
+Google Chrome is an Electron desktop application with two distinct rendering
 layers:
 
 1. **Browser chrome** — React UI in the main window (`BrowserWindow`) for tabs,

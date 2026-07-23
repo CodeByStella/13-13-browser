@@ -3,7 +3,7 @@ import { app, session, type Session, type WebContents } from 'electron';
 /**
  * Sites increasingly gate on Chrome 137+ while Electron 36 ships Chromium 136.
  * v1.0.0 and v2.0.0 both used the same engine; v2 only changed the app token in
- * the default Electron UA (`13.13 Browser/2.0.0`), which some detectors treat as
+ * the default Electron UA (`Google Chrome/2.0.0`), which some detectors treat as
  * the browser version (2 < 137). We report at least this major in UA + Client Hints.
  */
 const MIN_REPORTED_CHROME_MAJOR = 137;

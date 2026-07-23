@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to 13.13 Browser are documented in this file.
+All notable changes to Google Chrome are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Site compatibility (Chrome 137+ gates)** — report Chrome major version 137 in the user agent and Client Hints while Electron 36 still ships Chromium 136; sync `navigator.userAgent` in-page so version checks match request headers. v1.0.0 and v2.0.0 used the same engine; the regression on 2.0.0 was mainly the default Electron UA appending `13.13 Browser/2.0.0`, which some sites misread as browser version `2` instead of the real `Chrome/136` token
+- **Site compatibility (Chrome 137+ gates)** — report Chrome major version 137 in the user agent and Client Hints while Electron 36 still ships Chromium 136; sync `navigator.userAgent` in-page so version checks match request headers. v1.0.0 and v2.0.0 used the same engine; the regression on 2.0.0 was mainly the default Electron UA appending `Google Chrome/2.0.0`, which some sites misread as browser version `2` instead of the real `Chrome/136` token
 
 ## [2.0.2] - 2026-06-25
 
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tab search picker** — filter and switch open tabs from a dropdown anchored to the tab bar
 - **Tab context menu** — right-click a tab for pin/unpin and close actions
 - **Session restore** — pinned tab order and pin state are saved and restored on restart
-- **Direct snake game URL** — open the built-in Pixel Snake game from the address bar with `1313://snake`
+- **Direct snake game URL** — open the built-in Pixel Snake game from the address bar with `chrome://snake`
 
 #### New tab page
 - **Persistent quick links** — customizable shortcuts saved to disk (`newtab-shortcuts.json`) and synced with page storage
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tab strip layout calculates width separately for pinned and unpinned tabs
 - Session store format now records a `pinned` flag per tab (migrates legacy URL-only sessions)
 - Main window background color aligned with the flat Chrome theme (`#2b2b2b`)
-- Error page styling updated to match the shared flat theme; game-only layout when opened via `1313://snake`
+- Error page styling updated to match the shared flat theme; game-only layout when opened via `chrome://snake`
 - Tray and DevTools windows use native image icons for sharper rendering on Windows
 
 ## [1.0.0] - 2026-06-11
@@ -96,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Separate session partitions for normal vs. private tabs
 
 #### UI
-- 13.13 brand mark in tab bar
+- Google Chrome brand mark in tab bar
 - Privacy score pill in tab bar
 - Animated loading bar and taskbar progress indicator
 - Custom app icon support (`build/icon.ico`)

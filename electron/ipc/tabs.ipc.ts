@@ -42,6 +42,9 @@ export function registerTabsIpc(): void {
   ipcMain.handle(IPC.TOGGLE_PIN_TAB, (_event, id: string) =>
     getAppContext().getTabManager()?.togglePinTab(id),
   );
+  ipcMain.handle(IPC.MOVE_TAB, (_event, id: string, toIndex: number) =>
+    getAppContext().getTabManager()?.moveTab(id, toIndex),
+  );
   ipcMain.handle(
     IPC.SHOW_TAB_CONTEXT_MENU,
     (_event, tabId: string, anchor: ChromePopupAnchor) => {

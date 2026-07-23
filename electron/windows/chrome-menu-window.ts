@@ -70,7 +70,7 @@ function buildToolbarItems(): ChromeMenuItemPayload[] {
     { type: 'header', label: 'Tools' },
     { type: 'item', id: 'toggle-devtools', label: 'Developer tools', shortcut: 'F12', icon: 'devtools' },
     { type: 'separator', label: '' },
-    { type: 'item', id: 'about', label: 'About 13.13 Browser', icon: 'info' },
+    { type: 'item', id: 'about', label: 'About Google Chrome', icon: 'info' },
   ];
 }
 

@@ -1,6 +1,6 @@
 # Development & release workflow
 
-This guide describes how to edit the codebase day to day, manage branches, and ship releases for **13.13 Browser**.
+This guide describes how to edit the codebase day to day, manage branches, and ship releases for **Google Chrome**.
 
 For coding standards and pull request etiquette, see [CONTRIBUTING.md](../CONTRIBUTING.md). For architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
@@ -182,7 +182,7 @@ pnpm dist
 Output is written to `release/` (gitignored), for example:
 
 ```text
-release/13.13 Browser Setup 1.0.0.exe
+release/Google Chrome Setup 1.0.0.exe
 ```
 
 CI uses `pnpm run dist:ci`, which is the same build but skips electron-builder’s GitHub publish step (`--publish never`).
@@ -281,7 +281,7 @@ git push origin v1.0.0
 
 | File | Purpose |
 |------|---------|
-| `13.13 Browser Setup x.y.z.exe` | Windows NSIS installer — **give this to users** |
+| `Google Chrome Setup x.y.z.exe` | Windows NSIS installer — **give this to users** |
 | `*.exe.blockmap` | Block hashes for delta updates (used by electron-updater) |
 | `latest.yml` | Update metadata for in-app auto-update (future use) |
 

@@ -28,6 +28,8 @@ export const browserApi = {
   duplicateTab: (id: string): Promise<void> => ipcRenderer.invoke(IPC.DUPLICATE_TAB, id),
   reopenClosedTab: (): Promise<void> => ipcRenderer.invoke(IPC.REOPEN_CLOSED_TAB),
   togglePinTab: (id: string): Promise<void> => ipcRenderer.invoke(IPC.TOGGLE_PIN_TAB, id),
+  moveTab: (id: string, toIndex: number): Promise<void> =>
+    ipcRenderer.invoke(IPC.MOVE_TAB, id, toIndex),
   showTabContextMenu: (
     tabId: string,
     anchor: { x: number; y: number; width: number; height?: number },

@@ -11,7 +11,7 @@ let ipcRegistered = false;
 
 function aboutInfo(): AboutInfo {
   return {
-    name: '13.13 Browser',
+    name: 'Google Chrome',
     version: app.getVersion(),
     tagline: 'Built for the best user privacy — strong defaults for tracking, permissions, and your data.',
     repository: 'https://github.com/CodeByStella/13-13-browser',

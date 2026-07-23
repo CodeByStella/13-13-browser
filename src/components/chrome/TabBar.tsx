@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { TabInfo } from '../../types/browser';
+import { useTabDragReorder } from '../../features/browser/useTabDragReorder';
 import { useTabStripLayout } from '../../features/browser/useTabStripLayout';
 import { IconClose, IconNewTab, IconPrivate, IconShield } from '../ui/Icons';
 import { WindowControls } from './WindowControls';
@@ -26,8 +27,9 @@ export function TabBar({
   onToggleMaximize,
   onCloseWindow,
 }: TabBarProps) {
-  const activeTabId = tabs.find((tab) => tab.isActive)?.id ?? null;
-  const { scrollRef, stripRef, isCompact } = useTabStripLayout(tabs, activeTabId);
+  const { displayTabs, draggingId, beginDrag, consumeClickSuppression } = useTabDragReorder(tabs);
+  const activeTabId = displayTabs.find((tab) => tab.isActive)?.id ?? null;
+  const { scrollRef, stripRef, isCompact } = useTabStripLayout(displayTabs, activeTabId);
   const [tabPickerOpen, setTabPickerOpen] = useState(false);
   const tabSearchBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -55,7 +57,7 @@ export function TabBar({
   };
 
   return (
-    <div className="tab-bar titlebar-drag">
+    <div className={`tab-bar titlebar-drag ${draggingId ? 'is-reordering' : ''}`}>
       <div className="tab-search-wrap titlebar-no-drag">
         <button
           ref={tabSearchBtnRef}
@@ -79,14 +81,17 @@ export function TabBar({
             ref={scrollRef}
             role="tablist"
           >
-            {tabs.map((tab) => (
+            {displayTabs.map((tab) => (
               <div
                 key={tab.id}
                 data-tab-id={tab.id}
                 role="tab"
                 aria-selected={tab.isActive}
-                className={`tab ${tab.isActive ? 'active' : ''} ${tab.isLoading ? 'loading' : ''} ${tab.isPrivate ? 'private' : ''} ${tab.isPinned ? 'pinned' : ''} ${!tab.isPinned && isCompact ? 'compact' : ''} titlebar-no-drag`}
-                onClick={() => onSwitchTab(tab.id)}
+                className={`tab ${tab.isActive ? 'active' : ''} ${tab.isLoading ? 'loading' : ''} ${tab.isPrivate ? 'private' : ''} ${tab.isPinned ? 'pinned' : ''} ${!tab.isPinned && isCompact ? 'compact' : ''} ${draggingId === tab.id ? 'dragging' : ''} titlebar-no-drag`}
+                onClick={() => {
+                  if (consumeClickSuppression()) return;
+                  onSwitchTab(tab.id);
+                }}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   void window.browserApi.showTabContextMenu(tab.id, {
@@ -95,6 +100,7 @@ export function TabBar({
                     width: 0,
                   });
                 }}
+                onPointerDown={(event) => beginDrag(tab, event)}
                 onMouseDown={(event) => {
                   if (event.button === 1) {
                     event.preventDefault();
@@ -119,17 +125,19 @@ export function TabBar({
                   )}
                 </span>
                 <span className="tab-title">{tab.isPrivate ? `Private · ${tab.title}` : tab.title}</span>
-                <button
-                  type="button"
-                  className="tab-close"
-                  aria-label={`Close ${tab.title}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onCloseTab(tab.id);
-                  }}
-                >
-                  <IconClose />
-                </button>
+                {!tab.isPinned && (
+                  <button
+                    type="button"
+                    className="tab-close"
+                    aria-label={`Close ${tab.title}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onCloseTab(tab.id);
+                    }}
+                  >
+                    <IconClose />
+                  </button>
+                )}
               </div>
             ))}
 

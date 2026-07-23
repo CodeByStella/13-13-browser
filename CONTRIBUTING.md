@@ -1,4 +1,4 @@
-# Contributing to 13.13 Browser
+# Contributing to Google Chrome
 
 Thank you for your interest in contributing. This document explains how to propose changes, report issues, and align with project standards.
 
@@ -131,7 +131,7 @@ Maintainers may request revisions before merge. Large features should be discuss
 
 Use the [bug report template](./.github/ISSUE_TEMPLATE/bug_report.md) and include:
 
-- OS version and 13.13 Browser version
+- OS version and Google Chrome version
 - Steps to reproduce
 - Expected vs. actual behavior
 - Screenshots or logs if relevant

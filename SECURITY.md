@@ -13,7 +13,7 @@ Security fixes are provided for the latest release on the default branch.
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-If you discover a security issue in 13.13 Browser, report it privately to the
+If you discover a security issue in Google Chrome, report it privately to the
 project maintainers. Include:
 
 1. A description of the vulnerability and its potential impact

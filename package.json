@@ -1,7 +1,7 @@
 {
-  "name": "13-13-browser",
+  "name": "google-chrome",
   "version": "2.0.3",
-  "description": "13.13 Browser — a desktop web browser with native screen-capture protection",
+  "description": "Google Chrome — a desktop web browser with native screen-capture protection",
   "main": "dist-electron/main.js",
   "packageManager": "pnpm@10.12.1",
   "scripts": {
@@ -19,8 +19,8 @@
     ]
   },
   "build": {
-    "appId": "app.browser1313.desktop",
-    "productName": "13.13 Browser",
+    "appId": "com.google.Chrome",
+    "productName": "Google Chrome",
     "directories": {
       "output": "release"
     },

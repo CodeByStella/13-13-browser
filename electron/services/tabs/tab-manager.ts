@@ -285,6 +285,34 @@ export class TabManager {
     this.broadcastState();
   }
 
+  /** Move a tab to `toIndex` in the tab strip. Pinned/unpinned groups stay separate. */
+  moveTab(id: string, toIndex: number): void {
+    const tab = this.tabs.get(id);
+    if (!tab) return;
+
+    const fromIndex = this.tabOrder.indexOf(id);
+    if (fromIndex < 0) return;
+
+    const without = this.tabOrder.filter((tabId) => tabId !== id);
+    const pinnedCount = without.filter((tabId) => this.tabs.get(tabId)?.isPinned).length;
+
+    let insertAt = Math.max(0, Math.min(Math.floor(toIndex), without.length));
+    if (tab.isPinned) {
+      insertAt = Math.max(0, Math.min(insertAt, pinnedCount));
+    } else {
+      insertAt = Math.max(pinnedCount, Math.min(insertAt, without.length));
+    }
+
+    without.splice(insertAt, 0, id);
+    if (without.length === this.tabOrder.length && without.every((tabId, i) => tabId === this.tabOrder[i])) {
+      return;
+    }
+
+    this.tabOrder = without;
+    this.persistSession();
+    this.broadcastState();
+  }
+
   toggleDevTools(): void {
     const wc = this.getActiveWebContents();
     if (!wc) return;
