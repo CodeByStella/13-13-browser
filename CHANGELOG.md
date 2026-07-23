@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-07-24
+
+### Changed
+
+- **Chromium engine** — upgrade Electron to 43.2.0 (Chromium 150) for current site version gates
+- **Browser identity** — sanitize the real Chromium user agent (strip Electron / app tokens); keep native Client Hints; remove CDP identity injection
+
 ### Fixed
 
-- **Site login / “unsafe browser”** — upgrade Electron to 43.2.0 (Chromium 150) so version gates pass without spoofing; report the real Chrome version; restore native Client Hints; remove CDP identity injection; allow real OAuth/login popups with a shared session
+- **Site login** — allow real OAuth / account-login popups with a shared session (Slack and similar); soften Google-auth request headers (no DNT on Google auth hosts)
+- **Auto-update** — public GitHub Releases feed with installer names matching `latest.yml` (from 2.0.4 / 2.0.5)
+
+### Also includes (from 2.0.4)
+
+- Chrome-style new tab page, omnibox host display, improved tab drag-and-drop
+- About donate link, privacy shield user icon
 
 ## [2.0.5] - 2026-07-23
 

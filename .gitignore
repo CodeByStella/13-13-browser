@@ -4,5 +4,7 @@ dist-electron/
 release/
 *.log
 pnpm-debug.log*
+package-lock.json
+npm-debug.log*
 .DS_Store
 Thumbs.db
