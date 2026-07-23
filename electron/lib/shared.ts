@@ -34,12 +34,15 @@ export function normalizeUrl(input: string, newTabPageUrl: string): string {
     return localFilePathToUrl(trimmed);
   }
 
-  const looksLikeDomain =
-    trimmed.includes('.') &&
+  // Host, host:port, or host/path/query/hash — not a search query.
+  const hostPart = trimmed.split(/[/?#]/)[0];
+  const looksLikeHost =
+    Boolean(hostPart) &&
     !trimmed.includes(' ') &&
-    !trimmed.includes('/') &&
-    !trimmed.includes('\\');
-  if (looksLikeDomain) return `https://${trimmed}`;
+    (hostPart.includes('.') ||
+      /^localhost(?::\d+)?$/i.test(hostPart) ||
+      /^[\d.]+(?::\d+)?$/.test(hostPart));
+  if (looksLikeHost) return `https://${trimmed}`;
 
   return `https://duckduckgo.com/?q=${encodeURIComponent(trimmed)}`;
 }

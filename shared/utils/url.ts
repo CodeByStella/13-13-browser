@@ -62,7 +62,7 @@ export function faviconUrl(url: string): string | null {
   }
 }
 
-/** Human-readable URL for the address bar (omits redundant trailing slashes). */
+/** Human-readable URL for the address bar when not editing (no https://). */
 export function formatAddressBarUrl(url: string): string {
   if (!url) return url;
 
@@ -70,17 +70,32 @@ export function formatAddressBarUrl(url: string): string {
     const parsed = new URL(url);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return url;
 
+    const path =
+      parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/+$/, '');
+    return `${parsed.host}${path}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url.replace(/\/+$/, '') || url;
+  }
+}
+
+/** Full URL shown while the address bar is focused for editing. */
+export function formatAddressBarUrlForEditing(url: string): string {
+  if (!url) return url;
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return url;
+
     if (parsed.pathname === '/' && !parsed.search && !parsed.hash) {
-      return parsed.origin;
+      return `${parsed.protocol}//${parsed.host}/`;
     }
 
     if (parsed.pathname.endsWith('/') && parsed.pathname.length > 1) {
       parsed.pathname = parsed.pathname.replace(/\/+$/, '');
-      return parsed.toString();
     }
 
-    return url;
+    return parsed.toString();
   } catch {
-    return url.replace(/\/+$/, '') || url;
+    return url;
   }
 }

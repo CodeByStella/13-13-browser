@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 import type { FindResult, TabInfo } from '@shared/types';
-import { formatAddressBarUrl } from '@shared/utils/url';
+import { formatAddressBarUrl, formatAddressBarUrlForEditing } from '@shared/utils/url';
 
 export function useFindInPage() {
   const [findOpen, setFindOpen] = useState(false);
@@ -91,12 +91,26 @@ export function useAddressBar(activeTab: TabInfo | null, addressRef: RefObject<H
     addressRef.current?.blur();
   }, [addressRef, addressValue]);
 
+  const onAddressFocus = useCallback(() => {
+    setAddressFocused(true);
+    if (activeTab?.url) {
+      setAddressValue(formatAddressBarUrlForEditing(activeTab.url));
+    }
+    requestAnimationFrame(() => {
+      addressRef.current?.select();
+    });
+  }, [activeTab?.url, addressRef]);
+
+  const onAddressBlur = useCallback(() => {
+    setAddressFocused(false);
+  }, []);
+
   return {
     addressValue,
     setAddressValue,
     addressFocused,
-    onAddressFocus: () => setAddressFocused(true),
-    onAddressBlur: () => setAddressFocused(false),
+    onAddressFocus,
+    onAddressBlur,
     handleNavigate,
   };
 }

@@ -395,9 +395,19 @@ button, input { font: inherit; }
   cursor: grabbing;
 }
 
+.tab-bar.is-reordering .tab:not(.dragging) {
+  transition: transform 0.15s ease;
+}
+
 .tab.dragging {
-  opacity: 0.55;
-  z-index: 3;
+  opacity: 0.95;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--tab-active-bg);
+  color: var(--text);
+  border-radius: var(--tab-top) var(--tab-top) 0 0 / calc(var(--tab-top) * 1.2) calc(var(--tab-top) * 1.2) 0 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: none;
 }
 
 .tab.active {
@@ -1106,7 +1116,7 @@ button, input { font: inherit; }
 .privacy-shield-meter-track,
 .privacy-shield-meter-progress {
   fill: none;
-  stroke-width: 2.25;
+  stroke-width: 1;
 }
 
 .privacy-shield-meter-track {
@@ -1114,17 +1124,13 @@ button, input { font: inherit; }
 }
 
 .privacy-shield-meter-progress {
-  stroke: var(--shield-accent);
+  stroke: #c8d4e0;
   stroke-linecap: round;
   transition: stroke-dasharray 0.35s ease;
 }
 
-.privacy-shield-meter-text {
-  fill: var(--text);
-  font-family: inherit;
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+.privacy-shield-meter-icon {
+  color: #c8d4e0;
 }
 
 .privacy-shield-label {

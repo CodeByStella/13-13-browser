@@ -36,9 +36,18 @@ function ScoreRing({ score }: { score: number }) {
         strokeDasharray={`${progress} ${METER_C}`}
         transform="rotate(-90 11 11)"
       />
-      <text className="privacy-shield-meter-text" x="11" y="12" textAnchor="middle" dominantBaseline="central">
-        {score}
-      </text>
+      <g
+        className="privacy-shield-meter-icon"
+        transform="translate(11 11) scale(0.58) translate(-12 -12)"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="8.25" r="3.25" />
+        <path d="M5.75 18.75c.35-2.85 2.85-4.75 6.25-4.75s5.9 1.9 6.25 4.75" />
+      </g>
     </svg>
   );
 }
@@ -64,7 +73,7 @@ export const PrivacyShieldButton = forwardRef<HTMLButtonElement, PrivacyShieldBu
         aria-haspopup="dialog"
       >
         <ScoreRing score={score} />
-        <span className="privacy-shield-label">{label}</span>
+        {/* <span className="privacy-shield-label">{label}</span> */}
       </button>
     );
   },

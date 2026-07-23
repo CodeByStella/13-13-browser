@@ -387,8 +387,21 @@ Workflow file: [`.github/workflows/release.yml`](./.github/workflows/release.yml
 The workflow runs on `windows-latest`, executes `pnpm install` and `pnpm run dist:ci` (build only — no electron-builder publish), then attaches these files to the release:
 
 - `Google Chrome Setup x.y.z.exe` — NSIS installer
-- `*.blockmap` — update metadata for electron-updater (future use)
-- `latest.yml` — update metadata for electron-updater (future use)
+- `*.blockmap` — delta/download metadata for electron-updater
+- `latest.yml` — required by in-app auto-update (electron-updater)
+
+### Auto-update
+
+Installed builds check [GitHub Releases](https://github.com/CodeByStella/13-13-browser/releases) via `electron-updater`.
+
+**Requirements for updates to work:**
+
+1. The GitHub repository must be **public** (private repos need a machine token that cannot ship in a consumer app).
+2. `package.json` → `build.publish.private` must be `false` (so packaged `app-update.yml` uses the public provider).
+3. Each version tag release must include `latest.yml`, the `.exe`, and the `.blockmap` (the Release workflow already uploads these).
+4. After switching from private → public, users need a **new installer** built with `private: false`. Older installs still carry a private feed config and will keep failing until reinstalled once.
+
+In **About**, use **Check for updates** → **Download** → **Restart to update**.
 
 Release notes are generated automatically from commits since the previous tag.
 

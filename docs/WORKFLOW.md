@@ -283,9 +283,11 @@ git push origin v1.0.0
 |------|---------|
 | `Google Chrome Setup x.y.z.exe` | Windows NSIS installer — **give this to users** |
 | `*.exe.blockmap` | Block hashes for delta updates (used by electron-updater) |
-| `latest.yml` | Update metadata for in-app auto-update (future use) |
+| `latest.yml` | Update metadata for in-app auto-update (`electron-updater`) |
 
-For manual downloads from GitHub Releases, only the `.exe` is required. Blockmap and `latest.yml` are kept for possible future auto-update support.
+For manual downloads from GitHub Releases, only the `.exe` is required. Blockmap and `latest.yml` are required for About → Check for updates.
+
+The repository must be **public** for auto-update to work without embedding a GitHub token. `package.json` → `build.publish.private` is `false` so packaged builds use the public GitHub provider.
 
 Installers are **unsigned** by default. Windows SmartScreen may warn until code signing is configured.
 

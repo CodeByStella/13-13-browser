@@ -216,12 +216,14 @@ export class TabManager {
     if (internal) {
       tab.pendingUrl = internal.display;
       tab.view.webContents.loadURL(internal.href);
+      this.broadcastState();
       return internal.display;
     }
 
     const url = normalizeUrl(rawUrl, this.newTabPageUrl);
     tab.pendingUrl = this.isInternalPage(url) ? undefined : url;
     tab.view.webContents.loadURL(url);
+    this.broadcastState();
     return this.isInternalPage(url) ? '' : url;
   }
 
@@ -502,6 +504,10 @@ export class TabManager {
     if (this.isInternalPage(rawUrl)) {
       return tab.pendingUrl ?? '';
     }
+
+    // Prefer the in-flight navigation target so the omnibox does not snap back
+    // to the previous page URL between Enter and did-navigate.
+    if (tab.pendingUrl) return tab.pendingUrl;
 
     return rawUrl;
   }

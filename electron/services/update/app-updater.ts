@@ -11,7 +11,10 @@ let state: UpdateState = {
 let aboutTarget: WebContents | null = null;
 let initialized = false;
 
+/** True when the user (About dialog) requested a check — errors must surface. */
 let explicitCheck = false;
+/** In-flight check promise so concurrent calls share one request. */
+let checkInFlight: Promise<UpdateState> | null = null;
 
 function broadcast(next: UpdateState): void {
   state = next;
@@ -38,12 +41,27 @@ export function registerAboutUpdateTarget(webContents: WebContents): void {
   }
 }
 
-function formatUpdateError(error: Error): string {
-  const text = error.message;
-  if (text.includes('404') || text.includes('releases.atom')) {
-    return 'Update check failed. Reinstall from GitHub Releases if auto-update is unavailable.';
+function formatUpdateError(error: unknown): string {
+  const text = error instanceof Error ? error.message : String(error);
+
+  if (
+    /404/.test(text) ||
+    /releases\.atom/i.test(text) ||
+    /HttpError:\s*404/i.test(text) ||
+    /Cannot find latest/i.test(text)
+  ) {
+    return 'Could not reach GitHub Releases. Make sure the repository is public and a release with latest.yml exists.';
   }
-  return text;
+
+  if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|net::/i.test(text)) {
+    return 'Network error while checking for updates. Try again when you are online.';
+  }
+
+  if (/ENOENT|latest\.yml/i.test(text)) {
+    return 'Update metadata (latest.yml) is missing from the latest GitHub Release.';
+  }
+
+  return text || 'Update check failed.';
 }
 
 export function initAppUpdater(): void {
@@ -54,9 +72,15 @@ export function initAppUpdater(): void {
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowDowngrade = false;
 
   autoUpdater.on('checking-for-update', () => {
-    patchState({ status: 'checking', version: undefined, percent: undefined, message: undefined });
+    patchState({
+      status: 'checking',
+      version: undefined,
+      percent: undefined,
+      message: undefined,
+    });
   });
 
   autoUpdater.on('update-available', (info) => {
@@ -83,6 +107,7 @@ export function initAppUpdater(): void {
     patchState({
       status: 'downloading',
       percent: Math.round(progress.percent),
+      message: undefined,
     });
   });
 
@@ -97,13 +122,17 @@ export function initAppUpdater(): void {
 
   autoUpdater.on('error', (error) => {
     if (!explicitCheck) {
-      patchState({ status: 'idle', message: undefined });
-      explicitCheck = false;
+      // Background / silent checks stay quiet — About stays idle until the user asks.
+      if (state.status === 'checking' || state.status === 'error') {
+        patchState({ status: 'idle', message: undefined, percent: undefined });
+      }
       return;
     }
+
     patchState({
       status: 'error',
       message: formatUpdateError(error),
+      percent: undefined,
     });
     explicitCheck = false;
   });
@@ -118,27 +147,52 @@ export async function checkForUpdates(options?: { silent?: boolean }): Promise<U
     return getUpdateState();
   }
 
-  if (state.status === 'checking' || state.status === 'downloading') {
+  const silent = options?.silent === true;
+  if (!silent) {
+    explicitCheck = true;
+  }
+
+  // Don't interrupt an active download / ready install.
+  if (state.status === 'downloading' || state.status === 'downloaded') {
     return getUpdateState();
   }
 
-  explicitCheck = !options?.silent;
-
-  try {
-    await autoUpdater.checkForUpdates();
-  } catch (error) {
-    if (explicitCheck) {
-      patchState({
-        status: 'error',
-        message: formatUpdateError(
-          error instanceof Error ? error : new Error('Update check failed'),
-        ),
-      });
-    }
-    explicitCheck = false;
+  // Join an in-flight check (e.g. silent startup check + About click).
+  if (checkInFlight) {
+    return checkInFlight;
   }
 
-  return getUpdateState();
+  checkInFlight = (async () => {
+    try {
+      if (!silent || state.status === 'idle' || state.status === 'error') {
+        patchState({
+          status: 'checking',
+          version: undefined,
+          percent: undefined,
+          message: undefined,
+        });
+      }
+
+      await autoUpdater.checkForUpdates();
+    } catch (error) {
+      if (explicitCheck) {
+        patchState({
+          status: 'error',
+          message: formatUpdateError(error),
+          percent: undefined,
+        });
+        explicitCheck = false;
+      } else if (state.status === 'checking') {
+        patchState({ status: 'idle', message: undefined, percent: undefined });
+      }
+    } finally {
+      checkInFlight = null;
+    }
+
+    return getUpdateState();
+  })();
+
+  return checkInFlight;
 }
 
 export async function downloadUpdate(): Promise<UpdateState> {
@@ -146,12 +200,19 @@ export async function downloadUpdate(): Promise<UpdateState> {
     return getUpdateState();
   }
 
+  patchState({
+    status: 'downloading',
+    percent: 0,
+    message: undefined,
+  });
+
   try {
     await autoUpdater.downloadUpdate();
   } catch (error) {
     patchState({
       status: 'error',
-      message: error instanceof Error ? error.message : 'Download failed',
+      message: formatUpdateError(error),
+      percent: undefined,
     });
   }
 
@@ -160,5 +221,6 @@ export async function downloadUpdate(): Promise<UpdateState> {
 
 export function installUpdate(): void {
   if (!app.isPackaged || state.status !== 'downloaded') return;
-  autoUpdater.quitAndInstall();
+  // Force relaunch after install so Windows NSIS updates apply cleanly.
+  autoUpdater.quitAndInstall(false, true);
 }

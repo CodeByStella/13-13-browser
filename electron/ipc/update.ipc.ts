@@ -11,7 +11,7 @@ import {
 
 export function registerUpdateIpc(): void {
   ipcMain.handle(IPC.GET_UPDATE_STATE, () => getUpdateState());
-  ipcMain.handle(IPC.CHECK_FOR_UPDATES, () => checkForUpdates());
+  ipcMain.handle(IPC.CHECK_FOR_UPDATES, () => checkForUpdates({ silent: false }));
   ipcMain.handle(IPC.DOWNLOAD_UPDATE, () => downloadUpdate());
   ipcMain.handle(IPC.INSTALL_UPDATE, () => {
     installUpdate();

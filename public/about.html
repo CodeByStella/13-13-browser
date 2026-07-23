@@ -246,6 +246,10 @@
             <span>View on GitHub</span>
             <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg>
           </button>
+          <button type="button" class="about-link" id="donate-link">
+            <span>Donate</span>
+            <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg>
+          </button>
         </div>
         <div class="about-update" id="update-section">
           <p class="about-update-status" id="update-status"></p>
@@ -282,7 +286,7 @@
             updateStatus.textContent = 'Updates are available in the installed app.';
             return;
           case 'checking':
-            updateStatus.textContent = 'Checking for updates…';
+            updateStatus.textContent = 'Checking GitHub Releases for updates…';
             updateBtn.textContent = 'Checking…';
             updateBtn.disabled = true;
             updateBtn.classList.remove('hidden');
@@ -302,6 +306,7 @@
           case 'downloading':
             updateStatus.textContent = `Downloading update… ${state.percent ?? 0}%`;
             updateProgress.classList.remove('hidden');
+            updateProgress.setAttribute('aria-hidden', 'false');
             updateProgressBar.style.width = `${state.percent ?? 0}%`;
             updateBtn.textContent = 'Downloading…';
             updateBtn.disabled = true;
@@ -321,7 +326,7 @@
             return;
           case 'idle':
           default:
-            updateStatus.textContent = 'Check for a newer version of Google Chrome.';
+            updateStatus.textContent = 'Check for a newer version from GitHub Releases.';
             updateBtn.textContent = 'Check for updates';
             updateBtn.classList.remove('hidden');
         }
@@ -346,6 +351,10 @@
 
       document.getElementById('repo-link').addEventListener('click', () => {
         if (repoUrl) void window.aboutApi.openExternal(repoUrl);
+      });
+
+      document.getElementById('donate-link').addEventListener('click', () => {
+        void window.aboutApi.openExternal('https://nowpayments.io/donation/stellaray777');
       });
 
       updateBtn.addEventListener('click', () => {

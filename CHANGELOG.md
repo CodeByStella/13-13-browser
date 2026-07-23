@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-07-23
+
+### Fixed
+
+- **Auto-update** — use the public GitHub Releases provider (repo is public); clearer About update errors; more reliable check / download / restart flow
+- **Address bar** — show host-only URLs when idle, expand to full URL while editing; keep pending navigation URL so the omnibox does not snap back; treat `host/path` as a URL not a search
+- **Tab reorder** — Chrome-like drag with floating tab, sibling slide, and less flicker
+
+### Changed
+
+- **New tab page** — flat Chrome-style layout with wallpaper, pill search, circular shortcuts, and in-bar Search / AI icons
+- **About** — Donate link via NOWPayments
+- **Privacy shield** — user icon inside the score ring
+
 ## [2.0.3] - 2026-06-25
 
 ### Fixed

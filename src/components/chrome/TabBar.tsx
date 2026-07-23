@@ -27,7 +27,8 @@ export function TabBar({
   onToggleMaximize,
   onCloseWindow,
 }: TabBarProps) {
-  const { displayTabs, draggingId, beginDrag, consumeClickSuppression } = useTabDragReorder(tabs);
+  const { displayTabs, draggingId, dragShifts, beginDrag, consumeClickSuppression } =
+    useTabDragReorder(tabs);
   const activeTabId = displayTabs.find((tab) => tab.isActive)?.id ?? null;
   const { scrollRef, stripRef, isCompact } = useTabStripLayout(displayTabs, activeTabId);
   const [tabPickerOpen, setTabPickerOpen] = useState(false);
@@ -81,13 +82,24 @@ export function TabBar({
             ref={scrollRef}
             role="tablist"
           >
-            {displayTabs.map((tab) => (
+            {displayTabs.map((tab) => {
+              const shift = dragShifts[tab.id];
+              const isDragging = draggingId === tab.id;
+              return (
               <div
                 key={tab.id}
                 data-tab-id={tab.id}
                 role="tab"
                 aria-selected={tab.isActive}
-                className={`tab ${tab.isActive ? 'active' : ''} ${tab.isLoading ? 'loading' : ''} ${tab.isPrivate ? 'private' : ''} ${tab.isPinned ? 'pinned' : ''} ${!tab.isPinned && isCompact ? 'compact' : ''} ${draggingId === tab.id ? 'dragging' : ''} titlebar-no-drag`}
+                className={`tab ${tab.isActive ? 'active' : ''} ${tab.isLoading ? 'loading' : ''} ${tab.isPrivate ? 'private' : ''} ${tab.isPinned ? 'pinned' : ''} ${!tab.isPinned && isCompact ? 'compact' : ''} ${isDragging ? 'dragging' : ''} titlebar-no-drag`}
+                style={
+                  shift != null
+                    ? {
+                        transform: `translate3d(${shift}px, 0, 0)`,
+                        zIndex: isDragging ? 5 : undefined,
+                      }
+                    : undefined
+                }
                 onClick={() => {
                   if (consumeClickSuppression()) return;
                   onSwitchTab(tab.id);
@@ -139,7 +151,8 @@ export function TabBar({
                   </button>
                 )}
               </div>
-            ))}
+              );
+            })}
 
             <button
               type="button"

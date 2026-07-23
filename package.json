@@ -1,6 +1,6 @@
 {
   "name": "google-chrome",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Google Chrome — a desktop web browser with native screen-capture protection",
   "main": "dist-electron/main.js",
   "packageManager": "pnpm@10.12.1",
@@ -39,7 +39,8 @@
       "provider": "github",
       "owner": "CodeByStella",
       "repo": "13-13-browser",
-      "private": true
+      "private": false,
+      "releaseType": "release"
     }
   },
   "dependencies": {
